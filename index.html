@@ -219,6 +219,9 @@
     .word-token {
       transition: all 0.14s ease;
     }
+    .reader-canvas {
+      white-space: pre-wrap;
+    }
     .word-token:hover {
       background-color: #e0e7ff;
       color: #1e3a8a;
@@ -260,7 +263,7 @@
                   Dialect-Synced Voice Profiles
                 </span>
               </div>
-              <p class="text-xs text-slate-500 font-medium">UK &amp; US recordings with device voice fallback</p>
+              <p class="text-xs text-slate-500 font-medium">UK &amp; US word recordings with a consistent passage reader</p>
             </div>
           </div>
 
@@ -467,7 +470,7 @@
           <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
             <div>
               <h2 class="text-lg font-bold text-slate-900">Upload PDF or Paste Text</h2>
-              <p class="text-xs text-slate-500 mt-0.5">English language documents only. Click any word or use Auto-Pronounce.</p>
+              <p class="text-xs text-slate-500 mt-0.5">English text only. Read full sentences in one selected voice, or click a word to hear it.</p>
             </div>
 
             <!-- Drag & Drop File Upload Zone -->
@@ -480,7 +483,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
               </svg>
               <span class="text-xs font-bold text-slate-800">Click to upload .PDF or .TXT file</span>
-              <span class="text-[11px] text-slate-500 mt-0.5">or drag and drop here (parsed 100% locally)</span>
+              <span class="text-[11px] text-slate-500 mt-0.5">or drag and drop here (PDF text is extracted locally; first 15 pages)</span>
               <input id="fileUploadInput" type="file" accept=".pdf,.txt,application/pdf,text/plain" class="hidden" />
             </label>
 
@@ -514,7 +517,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
               <div>
-                <p class="font-bold">English Language Documents Only</p>
+                <p class="font-bold">Reader message</p>
                 <p id="languageAlertDetail" class="mt-0.5 text-rose-700">Non-English characters or language patterns were detected. VoxLab only processes English text.</p>
               </div>
             </div>
@@ -565,7 +568,7 @@
             <!-- Strict Consistency Status Strip inside Reader -->
             <div id="readerConsistencyStrip" class="mt-3 px-3.5 py-2 rounded-lg bg-uk-50/70 border border-uk-200 text-xs font-semibold text-uk-900 flex flex-wrap items-center justify-between gap-2">
               <span id="readerConsistencyText">British reader uses the selected UK voice.</span>
-              <span class="text-[11px] font-medium text-uk-700">Uses the top-bar voice selection</span>
+              <span id="readerConsistencyDetail" class="text-[11px] font-medium text-uk-700">One selected voice reads full sentences</span>
             </div>
 
             <!-- Auto-Pronounce Transport Controls -->
@@ -578,7 +581,7 @@
                   class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition"
                 >
                   <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                  <span>Auto-Pronounce All</span>
+                  <span>Read Passage</span>
                 </button>
                 <button
                   type="button"
@@ -607,13 +610,13 @@
             <!-- Interactive Clickable Word Canvas -->
             <div
               id="interactiveReaderCanvas"
-              class="flex-1 p-5 rounded-xl bg-slate-50/70 border border-slate-200/80 text-base sm:text-lg leading-relaxed text-slate-800 select-none overflow-y-auto max-h-[380px]"
+              class="reader-canvas flex-1 p-5 rounded-xl bg-slate-50/70 border border-slate-200/80 text-base sm:text-lg leading-relaxed text-slate-800 select-none overflow-y-auto max-h-[380px]"
             >
               <!-- Word tokens rendered dynamically -->
             </div>
 
             <div class="mt-3 flex items-center justify-between text-[11px] text-slate-400">
-              <span>Tip: Click any single word for instant pronunciation or press <strong>Auto-Pronounce All</strong>.</span>
+              <span>Tip: Click a word for instant pronunciation or press <strong>Read Passage</strong> for continuous sentence-level speech.</span>
               <span id="readerWordCount">0 words</span>
             </div>
           </div>
@@ -705,9 +708,14 @@
       trickyCategory: 'all',
       readerDialect: 'UK',
       readerTokens: [],
+      readerWordRanges: [],
+      readerSegments: [],
+      readerVoice: null,
       autoReadIndex: -1,
       isAutoReading: false,
       isAutoPaused: false,
+      readerSpeechStarted: false,
+      autoReadSessionId: 0,
       autoReadTimer: null,
       currentAudio: null,
       playbackRequestId: 0,
@@ -764,10 +772,10 @@
       }
 
       updateVoiceSelectionUI();
-      if (state.isAutoReading && !state.isAutoPaused && state.autoReadIndex >= 0 && state.readerDialect === dialect) {
-        stopCurrentAudio();
-        clearTimeout(state.autoReadTimer);
-        stepAutoRead(state.autoReadIndex);
+      if (state.isAutoReading && state.readerDialect === dialect) {
+        const resumeIndex = Math.max(0, state.autoReadIndex);
+        stopAutoRead();
+        startAutoRead(resumeIndex);
       }
     }
 
@@ -795,7 +803,8 @@
       const readerActor = VOICE_ACTORS[rDialect === 'UK' ? state.ukActor : state.usActor];
       const readerStrip = document.getElementById('readerConsistencyStrip');
       const readerText = document.getElementById('readerConsistencyText');
-      readerText.textContent = `${rDialect === 'UK' ? 'British' : 'American'} reader uses ${readerActor.name} (${readerActor.role})`;
+      const selectedVoice = state.readerVoice ? ` · ${state.readerVoice.name}` : '';
+      readerText.textContent = `${rDialect === 'UK' ? 'British' : 'American'} reader uses ${readerActor.name} (${readerActor.role})${selectedVoice}`;
       readerStrip.className = rDialect === 'UK'
         ? 'mt-3 px-3.5 py-2 rounded-lg bg-uk-50/70 border border-uk-200 text-xs font-semibold text-uk-900 flex flex-wrap items-center justify-between gap-2'
         : 'mt-3 px-3.5 py-2 rounded-lg bg-us-50/70 border border-us-200 text-xs font-semibold text-us-900 flex flex-wrap items-center justify-between gap-2';
@@ -1307,29 +1316,98 @@
       }
     });
 
+    function extractPdfPageText(content) {
+      const lines = [];
+      let lineText = '';
+      let previousY = null;
+      let previousEndX = null;
+      let previousFontSize = 12;
+
+      const flushLine = () => {
+        const line = lineText.trim();
+        if (line) lines.push(line.replace(/\s+([,.;:!?])/g, '$1'));
+        lineText = '';
+        previousEndX = null;
+        return Boolean(line);
+      };
+
+      for (const item of content.items) {
+        if (typeof item.str !== 'string') continue;
+        const text = item.str;
+        const y = item.transform?.[5];
+        const x = item.transform?.[4];
+        const fontSize = Math.abs(item.transform?.[3] || 12);
+
+        if (Number.isFinite(y) && Number.isFinite(previousY) && Math.abs(y - previousY) > 2) {
+          const paragraphBreak = Math.abs(y - previousY) > Math.max(12, previousFontSize * 1.35);
+          if (lineText) {
+            flushLine();
+          } else if (paragraphBreak && lines.length && lines.at(-1) !== '') {
+            lines.push('');
+          }
+          if (paragraphBreak && lines.at(-1) !== '') lines.push('');
+        }
+
+        if (text.trim()) {
+          if (lineText && !/\s$/.test(lineText) && !/^\s/.test(text)) {
+            const gap = Number.isFinite(x) && Number.isFinite(previousEndX)
+              ? x - previousEndX
+              : Infinity;
+            if (gap > Math.max(1, fontSize * 0.12)) lineText += ' ';
+          }
+          lineText += text;
+          previousEndX = Number.isFinite(x) && Number.isFinite(item.width)
+            ? x + item.width
+            : null;
+        } else if (lineText && !/\s$/.test(lineText)) {
+          lineText += ' ';
+          previousEndX = null;
+        }
+
+        if (Number.isFinite(y)) previousY = y;
+        previousFontSize = fontSize;
+        if (item.hasEOL) flushLine();
+      }
+
+      flushLine();
+      return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    }
+
     async function handleUploadedFile(file) {
       const textArea = document.getElementById('rawTextInput');
       setWaveformActive(false, `Reading ${file.name}...`);
+      hideLanguageWarning();
 
       try {
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+          if (!window.pdfjsLib) throw new Error('The PDF reader could not be loaded. Check your internet connection and reload the page.');
           const arrayBuffer = await file.arrayBuffer();
           const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          let extractedText = '';
+          const extractedPages = [];
           const maxPages = Math.min(pdf.numPages, 15); // Parse up to 15 pages smoothly
           for (let i = 1; i <= maxPages; i++) {
             const page = await pdf.getPage(i);
             const content = await page.getTextContent();
-            extractedText += content.items.map(item => item.str).join(' ') + '\n\n';
+            extractedPages.push(extractPdfPageText(content));
           }
-          textArea.value = extractedText.trim();
-        } else {
-          const text = await file.text();
-          textArea.value = text.trim();
+          textArea.value = extractedPages.filter(Boolean).join('\n\n');
+          processReaderText();
+          if (pdf.numPages > maxPages && state.readerTokens.length) {
+            showLanguageWarning(`Loaded the first ${maxPages} of ${pdf.numPages} pages. This reader currently limits PDF extraction to 15 pages.`);
+          }
+          return;
         }
+        if (file.type !== 'text/plain' && !file.name.toLowerCase().endsWith('.txt')) {
+          throw new Error('Choose a text-based PDF or a .txt file.');
+        }
+        textArea.value = (await file.text()).trim();
         processReaderText();
       } catch (err) {
-        showLanguageWarning('Could not extract readable text from this file. Please try a standard text-based PDF or .txt document.');
+        const message = err instanceof Error ? err.message : 'an unexpected error occurred';
+        showLanguageWarning(`Could not read "${file.name}": ${message}`);
+        setWaveformActive(false, 'File could not be read');
+      } finally {
+        fileInput.value = '';
       }
     }
 
@@ -1384,9 +1462,14 @@
     }
 
     function setReaderDialect(dialect) {
+      if (dialect !== 'UK' && dialect !== 'US') return;
+      const shouldRestart = state.isAutoReading;
+      const resumeIndex = Math.max(0, state.autoReadIndex);
+      if (shouldRestart) stopAutoRead();
       state.readerDialect = dialect;
       state.activeDialect = dialect;
       updateReaderDialectUI();
+      if (shouldRestart) startAutoRead(resumeIndex);
     }
 
     function lookupWordIpa(cleanWord, dialect) {
@@ -1404,22 +1487,36 @@
     function processReaderText() {
       stopAutoRead();
       const rawText = document.getElementById('rawTextInput').value;
+      state.readerTokens = [];
+      state.readerWordRanges = [];
+      state.readerSegments = [];
       const check = validateEnglishOnly(rawText);
 
       if (!check.valid) {
+        document.getElementById('interactiveReaderCanvas').replaceChildren();
+        document.getElementById('readerWordCount').textContent = '0 words';
         showLanguageWarning(check.reason);
         return;
       }
       hideLanguageWarning();
 
       // Tokenize into clickable words while preserving punctuation
-      const rawTokens = rawText.split(/\s+/).filter(Boolean);
+      const tokenMatches = [...rawText.matchAll(/\S+/g)];
+      const rawTokens = tokenMatches.map(match => match[0]);
       state.readerTokens = rawTokens;
+      state.readerWordRanges = tokenMatches.map(match => ({
+        start: match.index,
+        end: match.index + match[0].length,
+      }));
+      state.readerSegments = buildReaderSegments(rawText);
 
       const canvas = document.getElementById('interactiveReaderCanvas');
       const tokenElements = [];
       rawTokens.forEach((token, idx) => {
-        if (idx > 0) tokenElements.push(document.createTextNode(' '));
+        if (idx > 0) {
+          const previousToken = tokenMatches[idx - 1];
+          tokenElements.push(document.createTextNode(rawText.slice(previousToken.index + previousToken[0].length, tokenMatches[idx].index)));
+        }
         const tokenElement = document.createElement('span');
         tokenElement.id = `reader-token-${idx}`;
         tokenElement.className = 'word-token inline-block px-1.5 py-0.5 my-0.5 rounded-md cursor-pointer font-medium';
@@ -1463,63 +1560,143 @@
       pronounceWord(cleanWord, actor.dialect, null, actor.id);
     }
 
-    // Sequential Word-by-Word Auto-Pronounce Engine
-    function startAutoRead() {
+    function buildReaderSegments(text) {
+      if (typeof Intl.Segmenter === 'function') {
+        const segmenter = new Intl.Segmenter('en', { granularity: 'sentence' });
+        return [...segmenter.segment(text)]
+          .map(({ segment, index }) => {
+            const start = index + segment.length - segment.trimStart().length;
+            const sentence = segment.trim();
+            return sentence ? { text: sentence, start } : null;
+          })
+          .filter(Boolean);
+      }
+
+      const segments = [];
+      const sentencePattern = /[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g;
+      for (const match of text.matchAll(sentencePattern)) {
+        const sentence = match[0].trim();
+        if (sentence) segments.push({ text: sentence, start: match.index + match[0].indexOf(sentence) });
+      }
+      return segments;
+    }
+
+    function findReaderTokenAtCharacterIndex(characterIndex) {
+      let low = 0;
+      let high = state.readerWordRanges.length - 1;
+      while (low <= high) {
+        const middle = Math.floor((low + high) / 2);
+        const range = state.readerWordRanges[middle];
+        if (characterIndex < range.start) {
+          high = middle - 1;
+        } else if (characterIndex >= range.end) {
+          low = middle + 1;
+        } else {
+          return middle;
+        }
+      }
+      return Math.min(low, state.readerWordRanges.length - 1);
+    }
+
+    // One utterance per sentence keeps the selected speaker and natural phrasing consistent.
+    async function startAutoRead(startIndex = 0) {
+      if (state.isAutoPaused) {
+        state.isAutoPaused = false;
+        state.isAutoReading = true;
+        if (state.readerSpeechStarted) {
+          window.speechSynthesis.resume();
+        } else {
+          stepAutoRead(state.autoReadIndex, state.autoReadSessionId);
+        }
+        return;
+      }
+      if (state.isAutoReading) return;
+
       if (!state.readerTokens.length) {
         processReaderText();
       }
-      if (!state.readerTokens.length) return;
-
-      if (state.isAutoPaused && state.autoReadIndex >= 0) {
-        state.isAutoPaused = false;
-        state.isAutoReading = true;
-        stepAutoRead(state.autoReadIndex);
+      if (!state.readerTokens.length || !state.readerSegments.length) return;
+      if (!('speechSynthesis' in window)) {
+        showLanguageWarning('This browser does not support continuous speech reading. Try a current version of Chrome, Edge, Safari, or Firefox.');
         return;
       }
 
-      stopAutoRead();
+      stopCurrentAudio();
       state.isAutoReading = true;
       state.isAutoPaused = false;
-      stepAutoRead(0);
+      state.autoReadIndex = Math.min(startIndex, state.readerSegments.length - 1);
+      state.readerSpeechStarted = false;
+      const sessionId = ++state.autoReadSessionId;
+      const actorId = state.readerDialect === 'UK' ? state.ukActor : state.usActor;
+      const actor = VOICE_ACTORS[actorId];
+      const voices = await getSpeechVoices();
+      if (!state.isAutoReading || sessionId !== state.autoReadSessionId) return;
+
+      state.readerVoice = selectStrictLocaleVoice(actor, voices);
+      updateReaderDialectUI();
+      if (!state.readerVoice) {
+        stopAutoRead();
+        showLanguageWarning(`No ${actor.dialect === 'UK' ? 'British' : 'American'} English device voice is available for ${actor.name}. Choose a voice in your operating system or browser and try again.`);
+        setWaveformActive(false, 'No matching device voice available');
+        return;
+      }
+      hideLanguageWarning();
+      if (!state.isAutoPaused) stepAutoRead(state.autoReadIndex, sessionId);
     }
 
-    function stepAutoRead(index) {
+    function stepAutoRead(index, sessionId) {
       if (!state.isAutoReading || state.isAutoPaused) return;
-      if (index >= state.readerTokens.length) {
+      if (sessionId !== state.autoReadSessionId) return;
+      if (index >= state.readerSegments.length) {
         stopAutoRead();
         setWaveformActive(false, 'Finished Reading Passage');
         return;
       }
 
       state.autoReadIndex = index;
-      const token = state.readerTokens[index];
-      const cleanWord = token.replace(/[^a-zA-Z'-]/g, '');
-
-      highlightReaderToken(index);
-
-      if (!cleanWord) {
-        state.autoReadTimer = setTimeout(() => stepAutoRead(index + 1), 120);
-        return;
-      }
+      const segment = state.readerSegments[index];
+      const initialTokenIndex = findReaderTokenAtCharacterIndex(segment.start);
+      highlightReaderToken(initialTokenIndex);
 
       const actorId = state.readerDialect === 'UK' ? state.ukActor : state.usActor;
       const actor = VOICE_ACTORS[actorId];
-      const ipa = lookupWordIpa(cleanWord, actor.dialect);
-      document.getElementById('wordInspectorBadge').innerHTML =
-        `<span class="font-bold text-slate-900">"${cleanWord}"</span> · <span class="text-indigo-700">${ipa}</span> · <span class="text-slate-500">${actor.name} (${actor.dialect})</span>`;
+      document.getElementById('wordInspectorBadge').textContent =
+        `${actor.name} · ${state.readerVoice.name} · sentence ${index + 1} of ${state.readerSegments.length}`;
 
-      pronounceWord(cleanWord, actor.dialect, () => {
-        if (state.isAutoReading && !state.isAutoPaused) {
-          state.autoReadTimer = setTimeout(() => stepAutoRead(index + 1), 130);
-        }
-      }, actor.id);
+      const utterance = new SpeechSynthesisUtterance(segment.text);
+      utterance.lang = actor.dialect === 'UK' ? 'en-GB' : 'en-US';
+      utterance.voice = state.readerVoice;
+      utterance.pitch = actor.pitch;
+      utterance.rate = Math.max(0.55, Math.min(1.3, state.playbackRate + actor.rateOffset));
+      utterance.onstart = () => {
+        if (sessionId !== state.autoReadSessionId) return;
+        state.readerSpeechStarted = true;
+        setWaveformActive(true, `Reading with ${state.readerVoice.name} · ${actor.dialect}`);
+      };
+      utterance.onboundary = event => {
+        if (sessionId !== state.autoReadSessionId || event.name !== 'word') return;
+        const tokenIndex = findReaderTokenAtCharacterIndex(segment.start + event.charIndex);
+        if (tokenIndex >= 0) highlightReaderToken(tokenIndex);
+      };
+      utterance.onend = () => {
+        if (sessionId !== state.autoReadSessionId || !state.isAutoReading || state.isAutoPaused) return;
+        state.readerSpeechStarted = false;
+        state.autoReadTimer = setTimeout(() => stepAutoRead(index + 1, sessionId), 80);
+      };
+      utterance.onerror = event => {
+        if (sessionId !== state.autoReadSessionId || event.error === 'canceled' || event.error === 'interrupted') return;
+        stopAutoRead();
+        showLanguageWarning(`Speech playback stopped: ${event.error || 'the selected device voice could not read this passage'}.`);
+        setWaveformActive(false, 'Speech playback stopped');
+      };
+      window.speechSynthesis.speak(utterance);
     }
 
     function pauseAutoRead() {
       if (state.isAutoReading) {
         state.isAutoPaused = true;
         clearTimeout(state.autoReadTimer);
-        stopCurrentAudio();
+        if (state.readerSpeechStarted) window.speechSynthesis.pause();
         setWaveformActive(false, 'Auto-Read Paused');
       }
     }
@@ -1528,9 +1705,13 @@
       state.isAutoReading = false;
       state.isAutoPaused = false;
       state.autoReadIndex = -1;
+      state.readerSpeechStarted = false;
+      state.readerVoice = null;
+      state.autoReadSessionId += 1;
       clearTimeout(state.autoReadTimer);
       stopCurrentAudio();
       highlightReaderToken(-1);
+      updateReaderDialectUI();
       setWaveformActive(false, 'Studio Idle · Ready');
     }
 

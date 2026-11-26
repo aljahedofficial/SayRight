@@ -16,13 +16,13 @@ Open [http://localhost:8000](http://localhost:8000). Serving the page over HTTP 
 
 - Compare 28 common words and filter by category.
 - Practice 24 tricky pronunciations.
-- Paste English text or upload a text-based PDF / `.txt` file, then click words or use the sequential reader.
-- Select separate British and American voices at the top; common-word and reader playback use the selected voice for each dialect.
+- Paste English text or upload a text-based PDF / `.txt` file, then click words or read the passage sentence by sentence.
+- Select separate British and American voice profiles at the top; passage reading resolves one matching device voice and keeps it for the whole run.
 - Adjust playback speed.
 - Switch between Light, Midnight, and Warm Paper themes; the selected theme is saved in the browser.
 - Play dialect-tagged recordings from Wikimedia Commons when available, with a matching browser voice as an optional fallback.
 
-Voice profiles are not recordings of six bundled actors. Commons audio is selected by dialect, not by profile; profiles select a matching voice from the voices available in the user's browser when fallback speech is used. Which voices are available depends on the operating system and browser.
+Voice profiles are not recordings of six bundled actors. Commons audio is selected by dialect, not by profile; profiles select a matching voice from those available in the user's browser for word playback fallback and passage reading. Passage reading uses sentence-level speech for more natural phrasing, while word-by-word Commons recordings remain available for individual pronunciation practice. Which voices are available depends on the operating system and browser.
 
 ## Dependencies and limitations
 
