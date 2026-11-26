@@ -18,6 +18,7 @@ Open [http://localhost:8000](http://localhost:8000). Serving the page over HTTP 
 - Practice 24 tricky pronunciations.
 - Paste English text or upload a text-based PDF / `.txt` file, then click words or use the sequential reader.
 - Choose UK or US voice profiles and adjust playback speed.
+- Switch between Light, Midnight, and Warm Paper themes; the selected theme is saved in the browser.
 - Play dialect-tagged recordings from Wikimedia Commons when available, with a matching browser voice as an optional fallback.
 
 Voice profiles are not recordings of six bundled actors. Commons audio is selected by dialect, not by profile; profiles select a matching voice from the voices available in the user's browser when fallback speech is used. Which voices are available depends on the operating system and browser.

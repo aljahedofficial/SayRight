@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f8fafc" />
   <title>VoxLab — UK &amp; US Pronunciation Studio</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -46,6 +47,159 @@
   </script>
 
   <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #f8fafc;
+      --panel-bg: #ffffff;
+      --subtle-bg: #f1f5f9;
+      --body-text: #0f172a;
+      --muted-text: #64748b;
+      --soft-text: #94a3b8;
+      --line-color: #e2e8f0;
+      --strong-surface: #0f172a;
+      --header-surface: rgba(255, 255, 255, 0.95);
+    }
+
+    :root[data-theme="midnight"] {
+      color-scheme: dark;
+      --page-bg: #0b1220;
+      --panel-bg: #121c2d;
+      --subtle-bg: #1a2639;
+      --body-text: #e2e8f0;
+      --muted-text: #b0bfd3;
+      --soft-text: #8293aa;
+      --line-color: #2b3a50;
+      --strong-surface: #26364d;
+      --header-surface: rgba(15, 23, 42, 0.96);
+    }
+
+    :root[data-theme="warm"] {
+      color-scheme: light;
+      --page-bg: #f4efe6;
+      --panel-bg: #fffaf1;
+      --subtle-bg: #f1e9db;
+      --body-text: #332b23;
+      --muted-text: #75685b;
+      --soft-text: #998a7a;
+      --line-color: #e5dac9;
+      --strong-surface: #44392f;
+      --header-surface: rgba(255, 250, 241, 0.96);
+    }
+
+    body {
+      background-color: var(--page-bg);
+      color: var(--body-text);
+      transition: background-color 180ms ease, color 180ms ease;
+    }
+
+    :root[data-theme] body.bg-slate-50 {
+      background-color: var(--page-bg) !important;
+    }
+
+    header {
+      background-color: var(--header-surface) !important;
+      border-color: var(--line-color) !important;
+    }
+
+    .bg-white {
+      background-color: #ffffff;
+    }
+
+    main > section.bg-white,
+    main section .bg-white.rounded-2xl {
+      background-color: var(--panel-bg);
+      box-shadow: 0 12px 34px rgba(15, 23, 42, 0.045);
+    }
+
+    :root[data-theme="midnight"] .bg-slate-50,
+    :root[data-theme="midnight"] .bg-slate-50\/40,
+    :root[data-theme="midnight"] .bg-slate-50\/70,
+    :root[data-theme="midnight"] .bg-slate-50\/90,
+    :root[data-theme="midnight"] .bg-slate-100,
+    :root[data-theme="warm"] .bg-slate-50,
+    :root[data-theme="warm"] .bg-slate-50\/40,
+    :root[data-theme="warm"] .bg-slate-50\/70,
+    :root[data-theme="warm"] .bg-slate-50\/90,
+    :root[data-theme="warm"] .bg-slate-100 {
+      background-color: var(--subtle-bg) !important;
+    }
+
+    :root[data-theme="midnight"] .bg-slate-200,
+    :root[data-theme="midnight"] .bg-slate-900,
+    :root[data-theme="warm"] .bg-slate-900 {
+      background-color: var(--strong-surface) !important;
+    }
+
+    :root[data-theme="midnight"] .text-slate-900,
+    :root[data-theme="midnight"] .text-slate-800,
+    :root[data-theme="midnight"] .text-slate-700,
+    :root[data-theme="midnight"] .text-slate-600,
+    :root[data-theme="warm"] .text-slate-900,
+    :root[data-theme="warm"] .text-slate-800,
+    :root[data-theme="warm"] .text-slate-700,
+    :root[data-theme="warm"] .text-slate-600 {
+      color: var(--body-text) !important;
+    }
+
+    :root[data-theme="midnight"] .text-slate-500,
+    :root[data-theme="warm"] .text-slate-500 {
+      color: var(--muted-text) !important;
+    }
+
+    :root[data-theme="midnight"] .text-slate-400,
+    :root[data-theme="warm"] .text-slate-400 {
+      color: var(--soft-text) !important;
+    }
+
+    :root[data-theme="midnight"] [class*="border-slate-"],
+    :root[data-theme="warm"] [class*="border-slate-"] {
+      border-color: var(--line-color) !important;
+    }
+
+    :root[data-theme="midnight"] .bg-transparent,
+    :root[data-theme="warm"] .bg-transparent {
+      color: var(--body-text);
+    }
+
+    :root[data-theme="midnight"] input,
+    :root[data-theme="midnight"] textarea,
+    :root[data-theme="midnight"] select,
+    :root[data-theme="warm"] input,
+    :root[data-theme="warm"] textarea,
+    :root[data-theme="warm"] select {
+      color: var(--body-text);
+    }
+
+    :root[data-theme="midnight"] input,
+    :root[data-theme="midnight"] textarea,
+    :root[data-theme="midnight"] select:not(#masterActorSelect),
+    :root[data-theme="warm"] input,
+    :root[data-theme="warm"] textarea,
+    :root[data-theme="warm"] select:not(#masterActorSelect) {
+      background-color: var(--subtle-bg);
+      border-color: var(--line-color);
+    }
+
+    :root[data-theme="midnight"] #masterActorSelect {
+      background-color: var(--strong-surface);
+    }
+
+    :root[data-theme="warm"] #masterActorSelect {
+      background-color: var(--strong-surface);
+      color: #ffffff;
+    }
+
+    :root[data-theme="midnight"] .word-token:hover {
+      background-color: #26364d;
+      color: #e0e7ff;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body {
+        transition: none;
+      }
+    }
+
     /* Custom subtle scrollbars & waveform equalizer animation */
     ::-webkit-scrollbar {
       width: 6px;
@@ -191,6 +345,21 @@
               0.75x Slow
             </button>
           </div>
+
+          <!-- Visual Theme -->
+          <label class="inline-flex items-center gap-2 rounded-lg bg-slate-100 border border-slate-200 px-2.5 py-1.5">
+            <span class="text-xs font-bold text-slate-600">Theme</span>
+            <select
+              id="themeSelect"
+              onchange="setTheme(this.value)"
+              aria-label="Choose appearance theme"
+              class="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
+            >
+              <option value="light">☀️ Light</option>
+              <option value="midnight">🌙 Midnight</option>
+              <option value="warm">📜 Warm paper</option>
+            </select>
+          </label>
 
           <!-- Desktop Waveform Status -->
           <div id="audioStatusPillDesktop" class="hidden lg:flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-medium shadow-sm min-w-[190px]">
@@ -592,6 +761,7 @@
 
     let state = {
       activeTab: 'common',
+      theme: 'light',
       playbackRate: 1.0,
       activeDialect: 'UK', // 'UK' or 'US' — always matches activeActor.dialect
       activeActor: 'uk_m1', // Single source of truth for locked human voice actor
@@ -609,6 +779,43 @@
       wikimediaCache: new Map(), // Session cache keyed by `${dialect}_${wordLower}` -> audioUrl | null
       preloadedAudio: new Map(), // Cached HTMLAudioElement instances keyed by `${dialect}_${wordLower}`
     };
+
+    const THEME_COLORS = {
+      light: '#f8fafc',
+      midnight: '#0b1220',
+      warm: '#f4efe6',
+    };
+
+    function setTheme(theme) {
+      if (!Object.hasOwn(THEME_COLORS, theme)) {
+        console.warn(`Unknown theme "${theme}".`);
+        return;
+      }
+
+      state.theme = theme;
+      document.documentElement.dataset.theme = theme;
+      document.getElementById('themeSelect').value = theme;
+      document.querySelector('meta[name="theme-color"]').content = THEME_COLORS[theme];
+
+      try {
+        localStorage.setItem('sayright-theme', theme);
+      } catch (error) {
+        console.warn('Theme changed, but the preference could not be saved.', error);
+      }
+    }
+
+    function initTheme() {
+      let savedTheme = 'light';
+      try {
+        const storedTheme = localStorage.getItem('sayright-theme');
+        if (Object.hasOwn(THEME_COLORS, storedTheme)) {
+          savedTheme = storedTheme;
+        }
+      } catch (error) {
+        console.warn('Saved theme could not be loaded.', error);
+      }
+      setTheme(savedTheme);
+    }
 
     /**
      * Locks in a specific voice actor and strictly synchronizes the active dialect
@@ -1454,6 +1661,7 @@
     // 8. INITIALIZATION ON PAGE LOAD
     // =========================================================================
     function initVoxLab() {
+      initTheme();
       selectVoiceActor('uk_m1');
       renderCommonWords();
       renderTrickyWords();
