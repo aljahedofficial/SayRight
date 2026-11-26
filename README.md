@@ -17,7 +17,8 @@ Open [http://localhost:8000](http://localhost:8000). Serving the page over HTTP 
 - Compare 28 common words and filter by category.
 - Practice 24 tricky pronunciations.
 - Paste English text or upload a text-based PDF / `.txt` file, then click words or use the sequential reader.
-- Choose UK or US voice profiles and adjust playback speed.
+- Select separate British and American voices at the top; common-word and reader playback use the selected voice for each dialect.
+- Adjust playback speed.
 - Switch between Light, Midnight, and Warm Paper themes; the selected theme is saved in the browser.
 - Play dialect-tagged recordings from Wikimedia Commons when available, with a matching browser voice as an optional fallback.
 

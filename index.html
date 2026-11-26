@@ -172,21 +172,12 @@
 
     :root[data-theme="midnight"] input,
     :root[data-theme="midnight"] textarea,
-    :root[data-theme="midnight"] select:not(#masterActorSelect),
+    :root[data-theme="midnight"] select,
     :root[data-theme="warm"] input,
     :root[data-theme="warm"] textarea,
-    :root[data-theme="warm"] select:not(#masterActorSelect) {
+    :root[data-theme="warm"] select {
       background-color: var(--subtle-bg);
       border-color: var(--line-color);
-    }
-
-    :root[data-theme="midnight"] #masterActorSelect {
-      background-color: var(--strong-surface);
-    }
-
-    :root[data-theme="warm"] #masterActorSelect {
-      background-color: var(--strong-surface);
-      color: #ffffff;
     }
 
     :root[data-theme="midnight"] .word-token:hover {
@@ -285,51 +276,27 @@
           </div>
         </div>
 
-        <!-- Global Voice Actor Roster & Speed Controls -->
+        <!-- British and American Voice Selectors & Playback Controls -->
         <div class="flex flex-wrap items-center gap-2 sm:gap-3">
 
-          <!-- Master Locked Voice Actor Selector (Auto-Syncs Dialect) -->
-          <div class="flex items-center bg-slate-900 text-white rounded-lg px-2.5 py-1.5 shadow-sm">
-            <label for="masterActorSelect" class="text-xs font-bold text-amber-300 mr-2 flex items-center gap-1 whitespace-nowrap">
-              <span>🎙️ Active Voice:</span>
-            </label>
-            <select
-              id="masterActorSelect"
-              onchange="selectVoiceActor(this.value)"
-              aria-label="Select Active Voice Actor"
-              class="bg-slate-800 text-xs sm:text-sm font-semibold text-white rounded px-2 py-0.5 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
-            >
-              <optgroup label="🇬🇧 British English (UK)">
-                <option value="uk_m1">Arthur — UK Male 1 (RP Formal)</option>
-                <option value="uk_m2">Oliver — UK Male 2 (Southern Modern)</option>
-                <option value="uk_f1">Eleanor — UK Female 1 (RP Clear)</option>
-              </optgroup>
-              <optgroup label="🇺🇸 American English (US)">
-                <option value="us_m1">David — US Male 1 (GenAm Broadcast)</option>
-                <option value="us_m2">Marcus — US Male 2 (GenAm Casual)</option>
-                <option value="us_f1">Sarah — US Female 1 (GenAm Clear)</option>
-              </optgroup>
-            </select>
-          </div>
-
-          <!-- UK Human Actor Selector -->
+          <!-- British Voice Actor Selector -->
           <div class="flex items-center bg-uk-50/80 border border-uk-200 rounded-lg px-2.5 py-1.5">
             <span class="text-xs font-bold text-uk-700 mr-2 flex items-center gap-1 whitespace-nowrap">
               <span class="inline-block w-2 h-2 rounded-full bg-uk-600"></span> UK Actor:
             </span>
-            <select id="ukActorSelect" onchange="selectVoiceActor(this.value)" aria-label="British Voice Actor" class="bg-transparent text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1">
+            <select id="ukActorSelect" onchange="setDialectVoice('UK', this.value)" aria-label="British Voice Actor" class="bg-transparent text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1">
               <option value="uk_m1">Arthur (Male 1 · RP Formal)</option>
               <option value="uk_m2">Oliver (Male 2 · Southern Modern)</option>
               <option value="uk_f1">Eleanor (Female 1 · RP Clear)</option>
             </select>
           </div>
 
-          <!-- US Human Actor Selector -->
+          <!-- American Voice Actor Selector -->
           <div class="flex items-center bg-us-50/80 border border-us-200 rounded-lg px-2.5 py-1.5">
             <span class="text-xs font-bold text-us-700 mr-2 flex items-center gap-1 whitespace-nowrap">
               <span class="inline-block w-2 h-2 rounded-full bg-us-600"></span> US Actor:
             </span>
-            <select id="usActorSelect" onchange="selectVoiceActor(this.value)" aria-label="American Voice Actor" class="bg-transparent text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1">
+            <select id="usActorSelect" onchange="setDialectVoice('US', this.value)" aria-label="American Voice Actor" class="bg-transparent text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1">
               <option value="us_m1">David (Male 1 · GenAm Broadcast)</option>
               <option value="us_m2">Marcus (Male 2 · GenAm Casual)</option>
               <option value="us_f1">Sarah (Female 1 · GenAm Clear)</option>
@@ -395,26 +362,6 @@
 
   <!-- MAIN CONTENT WORKSPACE -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-
-    <!-- Voice Roster Reference Banner -->
-    <section class="mb-6 bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <div>
-          <div class="flex flex-wrap items-center gap-2">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Six Dialect Voice Profiles</h2>
-            <span id="globalConsistencyBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-uk-50 text-uk-800 border border-uk-200">
-              Active Dialect: British English • Locked Actor: Arthur (UK Male 1)
-            </span>
-          </div>
-          <p class="text-xs text-slate-600 mt-1">
-            Select a profile to synchronize the dialect and device voice fallback. Commons recordings are dialect-specific, not actor-specific.
-          </p>
-        </div>
-        <div id="rosterCardsContainer" class="flex flex-wrap gap-1.5 text-[11px] font-semibold">
-          <!-- Interactive actor lock chips rendered dynamically -->
-        </div>
-      </div>
-    </section>
 
     <!-- =================================================================== -->
     <!-- SECTION 1: COMMON WORD PRACTICE (TWO-COLUMN UK VS US COMPARISON)    -->
@@ -589,7 +536,7 @@
         <div class="lg:col-span-7">
           <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm flex flex-col h-full">
 
-            <!-- Reader Dialect & Voice Actor Toolbar -->
+            <!-- Reader Dialect Toolbar -->
             <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Reader Dialect:</span>
@@ -613,23 +560,12 @@
                 </div>
               </div>
 
-              <!-- Dialect-Filtered Voice Selector inside Reader (Options dynamically match active dialect) -->
-              <div class="flex items-center gap-2">
-                <label for="readerVoiceSelect" class="text-xs font-bold text-slate-500">Dialect Voice:</label>
-                <select
-                  id="readerVoiceSelect"
-                  onchange="selectVoiceActor(this.value)"
-                  class="px-2.5 py-1.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <!-- Populated dynamically strictly for the selected dialect -->
-                </select>
-              </div>
             </div>
 
             <!-- Strict Consistency Status Strip inside Reader -->
             <div id="readerConsistencyStrip" class="mt-3 px-3.5 py-2 rounded-lg bg-uk-50/70 border border-uk-200 text-xs font-semibold text-uk-900 flex flex-wrap items-center justify-between gap-2">
-              <span id="readerConsistencyText">Active Dialect: British English • Locked Actor: Arthur (UK Male 1)</span>
-              <span class="text-[11px] font-medium text-uk-700">Dialect &amp; Actor Strictly Synchronized</span>
+              <span id="readerConsistencyText">British reader uses the selected UK voice.</span>
+              <span class="text-[11px] font-medium text-uk-700">Uses the top-bar voice selection</span>
             </div>
 
             <!-- Auto-Pronounce Transport Controls -->
@@ -763,8 +699,7 @@
       activeTab: 'common',
       theme: 'light',
       playbackRate: 1.0,
-      activeDialect: 'UK', // 'UK' or 'US' — always matches activeActor.dialect
-      activeActor: 'uk_m1', // Single source of truth for locked human voice actor
+      activeDialect: 'UK',
       ukActor: 'uk_m1',
       usActor: 'us_m1',
       trickyCategory: 'all',
@@ -817,77 +752,37 @@
       setTheme(savedTheme);
     }
 
-    /**
-     * Locks in a specific voice actor and strictly synchronizes the active dialect
-     * and all UI selectors/badges so dialect and actor never mismatch.
-     */
-    function selectVoiceActor(actorId, options = { syncReaderDialect: true }) {
+    function setDialectVoice(dialect, actorId) {
       const actor = VOICE_ACTORS[actorId];
-      if (!actor) return;
+      if (!actor || actor.dialect !== dialect) return;
 
-      state.activeActor = actor.id;
-      state.activeDialect = actor.dialect;
-
-      if (actor.dialect === 'UK') {
+      state.activeDialect = dialect;
+      if (dialect === 'UK') {
         state.ukActor = actor.id;
-        document.getElementById('ukActorSelect').value = actor.id;
       } else {
         state.usActor = actor.id;
-        document.getElementById('usActorSelect').value = actor.id;
       }
 
-      document.getElementById('masterActorSelect').value = actor.id;
-      document.getElementById('ukActiveLabel').textContent = `UK Actor: ${VOICE_ACTORS[state.ukActor].name}`;
-      document.getElementById('usActiveLabel').textContent = `US Actor: ${VOICE_ACTORS[state.usActor].name}`;
-
-      if (options.syncReaderDialect) {
-        state.readerDialect = actor.dialect;
-      }
-
-      updateDialectActorUI();
-      if (state.isAutoReading && !state.isAutoPaused && state.autoReadIndex >= 0) {
-        // Re-trigger current word smoothly with newly selected voice
+      updateVoiceSelectionUI();
+      if (state.isAutoReading && !state.isAutoPaused && state.autoReadIndex >= 0 && state.readerDialect === dialect) {
         stopCurrentAudio();
         clearTimeout(state.autoReadTimer);
         stepAutoRead(state.autoReadIndex);
       }
     }
 
-    function updateDialectActorUI() {
-      const actor = VOICE_ACTORS[state.activeActor];
-      const dialectFullName = state.activeDialect === 'UK' ? 'British English' : 'American English';
-      const consistencySummary = `Active Dialect: ${dialectFullName} • Voice Profile: ${actor.name} (${actor.role})`;
+    function updateVoiceSelectionUI() {
+      document.getElementById('ukActorSelect').value = state.ukActor;
+      document.getElementById('usActorSelect').value = state.usActor;
+      document.getElementById('ukActiveLabel').textContent = `UK Actor: ${VOICE_ACTORS[state.ukActor].name}`;
+      document.getElementById('usActiveLabel').textContent = `US Actor: ${VOICE_ACTORS[state.usActor].name}`;
+      updateReaderDialectUI();
+    }
 
-      const globalBadge = document.getElementById('globalConsistencyBadge');
-      globalBadge.textContent = consistencySummary;
-      globalBadge.className = state.activeDialect === 'UK'
-        ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-uk-50 text-uk-800 border border-uk-200'
-        : 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-us-50 text-us-800 border border-us-200';
-
-      // Render interactive 6-actor roster buttons with active lock state
-      const rosterContainer = document.getElementById('rosterCardsContainer');
-      rosterContainer.innerHTML = Object.values(VOICE_ACTORS).map(a => {
-        const isLocked = a.id === state.activeActor;
-        const baseColor = a.dialect === 'UK'
-          ? (isLocked ? 'bg-uk-600 text-white border-uk-700 ring-2 ring-uk-300' : 'bg-uk-50 text-uk-800 border-uk-200 hover:bg-uk-100')
-          : (isLocked ? 'bg-us-600 text-white border-us-700 ring-2 ring-us-300' : 'bg-us-50 text-us-800 border-us-200 hover:bg-us-100');
-        return `
-          <button
-            type="button"
-            onclick="selectVoiceActor('${a.id}')"
-            class="px-2.5 py-1 rounded-md border transition cursor-pointer ${baseColor}"
-            title="Lock in ${a.name} (${a.role})"
-          >
-            ${a.flag} ${a.name} <span class="opacity-80 font-normal">(${a.dialect})</span>${isLocked ? ' ✓' : ''}
-          </button>
-        `;
-      }).join('');
-
-      // Sync Section 3 Reader dialect toggle and filtered actor dropdown
+    function updateReaderDialectUI() {
       const rDialect = state.readerDialect;
       const ukBtn = document.getElementById('readerDialectUK');
       const usBtn = document.getElementById('readerDialectUS');
-      const rSelect = document.getElementById('readerVoiceSelect');
 
       if (rDialect === 'UK') {
         ukBtn.className = 'px-3 py-1 rounded-md text-xs font-bold bg-uk-600 text-white shadow-sm transition';
@@ -897,20 +792,10 @@
         ukBtn.className = 'px-3 py-1 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 transition';
       }
 
-      // Only populate voices belonging to the active reader dialect
-      const matchingActors = Object.values(VOICE_ACTORS).filter(a => a.dialect === rDialect);
-      const selectedForReader = matchingActors.some(a => a.id === state.activeActor)
-        ? state.activeActor
-        : (rDialect === 'UK' ? state.ukActor : state.usActor);
-
-      rSelect.innerHTML = matchingActors.map(a =>
-        `<option value="${a.id}" ${a.id === selectedForReader ? 'selected' : ''}>${a.name} — ${a.role}</option>`
-      ).join('');
-
-      const activeReaderActor = VOICE_ACTORS[selectedForReader];
+      const readerActor = VOICE_ACTORS[rDialect === 'UK' ? state.ukActor : state.usActor];
       const readerStrip = document.getElementById('readerConsistencyStrip');
       const readerText = document.getElementById('readerConsistencyText');
-      readerText.textContent = `Active Dialect: ${rDialect === 'UK' ? 'British English' : 'American English'} • Voice Profile: ${activeReaderActor.name} (${activeReaderActor.role})`;
+      readerText.textContent = `${rDialect === 'UK' ? 'British' : 'American'} reader uses ${readerActor.name} (${readerActor.role})`;
       readerStrip.className = rDialect === 'UK'
         ? 'mt-3 px-3.5 py-2 rounded-lg bg-uk-50/70 border border-uk-200 text-xs font-semibold text-uk-900 flex flex-wrap items-center justify-between gap-2'
         : 'mt-3 px-3.5 py-2 rounded-lg bg-us-50/70 border border-us-200 text-xs font-semibold text-us-900 flex flex-wrap items-center justify-between gap-2';
@@ -1233,20 +1118,12 @@
       }
     }
 
-    document.getElementById('ukActorSelect').addEventListener('change', (e) => {
-      selectVoiceActor(e.target.value);
-    });
-
-    document.getElementById('usActorSelect').addEventListener('change', (e) => {
-      selectVoiceActor(e.target.value);
-    });
-
     // =========================================================================
     // 5. SECTION 1 RENDERER: COMMON WORD PRACTICE (TWO-COLUMN UK VS US)
     // =========================================================================
     function playCommonDialectWord(word, dialect) {
       const targetActorId = dialect === 'UK' ? state.ukActor : state.usActor;
-      selectVoiceActor(targetActorId);
+      state.activeDialect = dialect;
       pronounceWord(word, dialect, null, targetActorId);
     }
 
@@ -1336,7 +1213,7 @@
 
     function playTrickyDialectWord(word, dialect, slow = false) {
       const targetActorId = dialect === 'UK' ? state.ukActor : state.usActor;
-      selectVoiceActor(targetActorId);
+      state.activeDialect = dialect;
       const prevRate = state.playbackRate;
       if (slow) state.playbackRate = 0.75;
       pronounceWord(word, dialect, () => {
@@ -1508,8 +1385,8 @@
 
     function setReaderDialect(dialect) {
       state.readerDialect = dialect;
-      const matchingActorId = dialect === 'UK' ? state.ukActor : state.usActor;
-      selectVoiceActor(matchingActorId, { syncReaderDialect: true });
+      state.activeDialect = dialect;
+      updateReaderDialectUI();
     }
 
     function lookupWordIpa(cleanWord, dialect) {
@@ -1576,7 +1453,7 @@
       if (!cleanWord) return;
 
       highlightReaderToken(index);
-      const actorId = document.getElementById('readerVoiceSelect').value || (state.readerDialect === 'UK' ? state.ukActor : state.usActor);
+      const actorId = state.readerDialect === 'UK' ? state.ukActor : state.usActor;
       const actor = VOICE_ACTORS[actorId];
       const ipa = lookupWordIpa(cleanWord, actor.dialect);
 
@@ -1625,7 +1502,7 @@
         return;
       }
 
-      const actorId = document.getElementById('readerVoiceSelect').value || (state.readerDialect === 'UK' ? state.ukActor : state.usActor);
+      const actorId = state.readerDialect === 'UK' ? state.ukActor : state.usActor;
       const actor = VOICE_ACTORS[actorId];
       const ipa = lookupWordIpa(cleanWord, actor.dialect);
       document.getElementById('wordInspectorBadge').innerHTML =
@@ -1662,7 +1539,7 @@
     // =========================================================================
     function initVoxLab() {
       initTheme();
-      selectVoiceActor('uk_m1');
+      updateVoiceSelectionUI();
       renderCommonWords();
       renderTrickyWords();
       processReaderText();
