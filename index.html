@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VoxLab — UK & US Genuine Human Pronunciation Studio</title>
+  <title>VoxLab — UK &amp; US Pronunciation Studio</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- PDF.js for client-side PDF extraction -->
@@ -14,7 +14,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
   <script>
-    tailwind.config = {
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
@@ -111,10 +112,10 @@
               <div class="flex items-center gap-2">
                 <h1 class="text-xl font-extrabold tracking-tight text-slate-900">VoxLab</h1>
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Dialect-Synced Roster
+                  Dialect-Synced Voice Profiles
                 </span>
               </div>
-              <p class="text-xs text-slate-500 font-medium">UK &amp; US Genuine Human Pronunciation Studio</p>
+              <p class="text-xs text-slate-500 font-medium">UK &amp; US recordings with device voice fallback</p>
             </div>
           </div>
 
@@ -136,7 +137,7 @@
           <!-- Master Locked Voice Actor Selector (Auto-Syncs Dialect) -->
           <div class="flex items-center bg-slate-900 text-white rounded-lg px-2.5 py-1.5 shadow-sm">
             <label for="masterActorSelect" class="text-xs font-bold text-amber-300 mr-2 flex items-center gap-1 whitespace-nowrap">
-              <span>🎙️ Active Actor:</span>
+              <span>🎙️ Active Voice:</span>
             </label>
             <select
               id="masterActorSelect"
@@ -231,13 +232,13 @@
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
           <div class="flex flex-wrap items-center gap-2">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">6-Actor Genuine Human Studio Roster</h2>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Six Dialect Voice Profiles</h2>
             <span id="globalConsistencyBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-uk-50 text-uk-800 border border-uk-200">
               Active Dialect: British English • Locked Actor: Arthur (UK Male 1)
             </span>
           </div>
           <p class="text-xs text-slate-600 mt-1">
-            Click any actor card below to lock in that voice and automatically synchronize the active English dialect.
+            Select a profile to synchronize the dialect and device voice fallback. Commons recordings are dialect-specific, not actor-specific.
           </p>
         </div>
         <div id="rosterCardsContainer" class="flex flex-wrap gap-1.5 text-[11px] font-semibold">
@@ -523,12 +524,12 @@
     // 1. VOICE ACTOR ROSTER & STRICT DIALECT CONSISTENCY STATE
     // =========================================================================
     const VOICE_ACTORS = {
-      uk_m1: { id: 'uk_m1', name: 'Arthur', role: 'UK Male 1 · RP Formal', dialect: 'UK', gender: 'male', flag: '🇬🇧', pitch: 0.88, rateOffset: -0.04 },
-      uk_m2: { id: 'uk_m2', name: 'Oliver', role: 'UK Male 2 · Southern Modern', dialect: 'UK', gender: 'male', flag: '🇬🇧', pitch: 1.04, rateOffset: 0.04 },
-      uk_f1: { id: 'uk_f1', name: 'Eleanor', role: 'UK Female 1 · RP Clear', dialect: 'UK', gender: 'female', flag: '🇬🇧', pitch: 1.22, rateOffset: -0.02 },
-      us_m1: { id: 'us_m1', name: 'David', role: 'US Male 1 · GenAm Broadcast', dialect: 'US', gender: 'male', flag: '🇺🇸', pitch: 0.90, rateOffset: 0.0 },
-      us_m2: { id: 'us_m2', name: 'Marcus', role: 'US Male 2 · GenAm Casual', dialect: 'US', gender: 'male', flag: '🇺🇸', pitch: 0.78, rateOffset: 0.05 },
-      us_f1: { id: 'us_f1', name: 'Sarah', role: 'US Female 1 · GenAm Clear', dialect: 'US', gender: 'female', flag: '🇺🇸', pitch: 1.18, rateOffset: -0.02 },
+      uk_m1: { id: 'uk_m1', name: 'Arthur', role: 'UK Male 1 · RP Formal', dialect: 'UK', gender: 'male', flag: '🇬🇧', pitch: 0.88, rateOffset: -0.04, voiceHints: ['arthur', 'daniel', 'google uk english male'], voiceVariant: 0 },
+      uk_m2: { id: 'uk_m2', name: 'Oliver', role: 'UK Male 2 · Southern Modern', dialect: 'UK', gender: 'male', flag: '🇬🇧', pitch: 1.04, rateOffset: 0.04, voiceHints: ['oliver', 'ryan', 'george'], voiceVariant: 1 },
+      uk_f1: { id: 'uk_f1', name: 'Eleanor', role: 'UK Female 1 · RP Clear', dialect: 'UK', gender: 'female', flag: '🇬🇧', pitch: 1.22, rateOffset: -0.02, voiceHints: ['eleanor', 'serena', 'hazel', 'libby', 'sonia'], voiceVariant: 0 },
+      us_m1: { id: 'us_m1', name: 'David', role: 'US Male 1 · GenAm Broadcast', dialect: 'US', gender: 'male', flag: '🇺🇸', pitch: 0.90, rateOffset: 0.0, voiceHints: ['david', 'alex', 'google us english male'], voiceVariant: 0 },
+      us_m2: { id: 'us_m2', name: 'Marcus', role: 'US Male 2 · GenAm Casual', dialect: 'US', gender: 'male', flag: '🇺🇸', pitch: 0.78, rateOffset: 0.05, voiceHints: ['marcus', 'guy', 'fred'], voiceVariant: 1 },
+      us_f1: { id: 'us_f1', name: 'Sarah', role: 'US Female 1 · GenAm Clear', dialect: 'US', gender: 'female', flag: '🇺🇸', pitch: 1.18, rateOffset: -0.02, voiceHints: ['sarah', 'samantha', 'zira', 'aria', 'jenny'], voiceVariant: 0 },
     };
 
     const COMMON_WORDS = [
@@ -604,6 +605,7 @@
       isAutoPaused: false,
       autoReadTimer: null,
       currentAudio: null,
+      playbackRequestId: 0,
       wikimediaCache: new Map(), // Session cache keyed by `${dialect}_${wordLower}` -> audioUrl | null
       preloadedAudio: new Map(), // Cached HTMLAudioElement instances keyed by `${dialect}_${wordLower}`
     };
@@ -647,7 +649,7 @@
     function updateDialectActorUI() {
       const actor = VOICE_ACTORS[state.activeActor];
       const dialectFullName = state.activeDialect === 'UK' ? 'British English' : 'American English';
-      const consistencySummary = `Active Dialect: ${dialectFullName} • Locked Actor: ${actor.name} (${actor.role})`;
+      const consistencySummary = `Active Dialect: ${dialectFullName} • Voice Profile: ${actor.name} (${actor.role})`;
 
       const globalBadge = document.getElementById('globalConsistencyBadge');
       globalBadge.textContent = consistencySummary;
@@ -701,7 +703,7 @@
       const activeReaderActor = VOICE_ACTORS[selectedForReader];
       const readerStrip = document.getElementById('readerConsistencyStrip');
       const readerText = document.getElementById('readerConsistencyText');
-      readerText.textContent = `Active Dialect: ${rDialect === 'UK' ? 'British English' : 'American English'} • Locked Actor: ${activeReaderActor.name} (${activeReaderActor.role})`;
+      readerText.textContent = `Active Dialect: ${rDialect === 'UK' ? 'British English' : 'American English'} • Voice Profile: ${activeReaderActor.name} (${activeReaderActor.role})`;
       readerStrip.className = rDialect === 'UK'
         ? 'mt-3 px-3.5 py-2 rounded-lg bg-uk-50/70 border border-uk-200 text-xs font-semibold text-uk-900 flex flex-wrap items-center justify-between gap-2'
         : 'mt-3 px-3.5 py-2 rounded-lg bg-us-50/70 border border-us-200 text-xs font-semibold text-us-900 flex flex-wrap items-center justify-between gap-2';
@@ -747,6 +749,7 @@
     }
 
     function stopCurrentAudio() {
+      state.playbackRequestId += 1;
       if (state.currentAudio) {
         state.currentAudio.pause();
         state.currentAudio.currentTime = 0;
@@ -823,25 +826,54 @@
       return null;
     }
 
-    // Selects a browser voice strictly matching the requested dialect ('en-GB' vs 'en-US')
-    function selectStrictLocaleVoice(actor) {
-      if (!('speechSynthesis' in window)) return null;
-      const voices = window.speechSynthesis.getVoices();
-      if (!voices.length) return null;
+    let speechVoicesPromise = null;
 
+    function getSpeechVoices() {
+      if (!('speechSynthesis' in window)) return Promise.resolve([]);
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length) return Promise.resolve(voices);
+
+      if (!speechVoicesPromise) {
+        speechVoicesPromise = new Promise(resolve => {
+          let timeoutId;
+          const finish = () => {
+            clearTimeout(timeoutId);
+            window.speechSynthesis.removeEventListener('voiceschanged', finish);
+            resolve(window.speechSynthesis.getVoices());
+          };
+          window.speechSynthesis.addEventListener('voiceschanged', finish, { once: true });
+          timeoutId = setTimeout(finish, 1200);
+        }).finally(() => {
+          speechVoicesPromise = null;
+        });
+      }
+
+      return speechVoicesPromise;
+    }
+
+    // Selects a profile-specific voice while never crossing the requested dialect.
+    function selectStrictLocaleVoice(actor, voices) {
       const targetLocale = actor.dialect === 'UK' ? 'en-gb' : 'en-us';
-      const exactLocaleVoices = voices.filter(v => v.lang.replace('_', '-').toLowerCase().startsWith(targetLocale));
+      const exactLocaleVoices = voices.filter(v => v.lang.replace(/_/g, '-').toLowerCase().startsWith(targetLocale));
 
       // Strict dialect separation: do NOT pick en-US when UK is requested, nor en-GB when US is requested
       if (!exactLocaleVoices.length) {
         return null;
       }
 
-      const femaleHints = ['female', 'woman', 'samantha', 'victoria', 'kate', 'serena', 'hazel', 'susan', 'zira', 'libby', 'sonia', 'jenny', 'aria', 'google uk english female'];
-      const maleHints = ['male', 'man', 'daniel', 'arthur', 'oliver', 'david', 'mark', 'alex', 'george', 'ryan', 'guy', 'google uk english male'];
+      const profileMatch = exactLocaleVoices.find(v =>
+        actor.voiceHints.some(hint => v.name.toLowerCase().includes(hint))
+      );
+      if (profileMatch) return profileMatch;
 
-      const hints = actor.gender === 'female' ? femaleHints : maleHints;
-      return exactLocaleVoices.find(v => hints.some(h => v.name.toLowerCase().includes(h))) || exactLocaleVoices[0];
+      const genderHints = actor.gender === 'female'
+        ? ['female', 'woman', 'samantha', 'victoria', 'kate', 'serena', 'hazel', 'susan', 'zira', 'libby', 'sonia', 'jenny', 'aria']
+        : ['male', 'man', 'daniel', 'arthur', 'oliver', 'david', 'mark', 'alex', 'george', 'ryan', 'guy'];
+      const genderVoices = exactLocaleVoices.filter(v =>
+        genderHints.some(hint => v.name.toLowerCase().includes(hint))
+      );
+      const candidates = genderVoices.length ? genderVoices : exactLocaleVoices;
+      return candidates[actor.voiceVariant % candidates.length];
     }
 
     function isBrowserFallbackEnabled() {
@@ -857,6 +889,7 @@
      */
     async function pronounceWord(rawText, dialect, onComplete = null, explicitActorId = null) {
       stopCurrentAudio();
+      const requestId = state.playbackRequestId;
 
       const resolvedDialect = explicitActorId && VOICE_ACTORS[explicitActorId]
         ? VOICE_ACTORS[explicitActorId].dialect
@@ -874,9 +907,16 @@
       const isSingleWord = !cleanWord.includes(' ');
       if (isSingleWord) {
         const mediaUrl = await fetchWikimediaDialectAudio(cleanWord, resolvedDialect);
+        if (requestId !== state.playbackRequestId) return;
         if (mediaUrl) {
           hideDialectAvailabilityNotice();
           const cacheKey = `${resolvedDialect}_${cleanWord.toLowerCase()}`;
+          let fallbackStarted = false;
+          const startFallback = () => {
+            if (fallbackStarted || requestId !== state.playbackRequestId) return Promise.resolve();
+            fallbackStarted = true;
+            return handleMissingDialectAudio(cleanWord, actor, resolvedDialect, effectiveRate, missingMsg, onComplete, requestId);
+          };
           try {
             const audio = state.preloadedAudio.get(cacheKey) || new Audio(mediaUrl);
             audio.src = mediaUrl;
@@ -886,36 +926,41 @@
             audio.preservesPitch = true;
             state.currentAudio = audio;
 
-            setWaveformActive(true, `${actor.flag} ${resolvedDialect} Commons · ${actor.name}: "${cleanWord}"`);
+            setWaveformActive(true, `${actor.flag} ${resolvedDialect} recording: "${cleanWord}"`);
 
             audio.onended = () => {
+              if (requestId !== state.playbackRequestId) return;
               state.currentAudio = null;
               setWaveformActive(false, `Studio Idle · ${resolvedDialect} (${actor.name})`);
               if (onComplete) onComplete();
             };
             audio.onerror = () => {
+              if (requestId !== state.playbackRequestId) return;
               state.currentAudio = null;
-              handleMissingDialectAudio(cleanWord, actor, resolvedDialect, effectiveRate, missingMsg, onComplete);
+              startFallback();
             };
 
             await audio.play();
             return;
           } catch (err) {
-            handleMissingDialectAudio(cleanWord, actor, resolvedDialect, effectiveRate, missingMsg, onComplete);
+            await startFallback();
             return;
           }
         }
       }
 
-      handleMissingDialectAudio(cleanWord, actor, resolvedDialect, effectiveRate, missingMsg, onComplete);
+      await handleMissingDialectAudio(cleanWord, actor, resolvedDialect, effectiveRate, missingMsg, onComplete, requestId);
     }
 
-    function handleMissingDialectAudio(cleanWord, actor, dialect, rate, missingMsg, onComplete) {
+    async function handleMissingDialectAudio(cleanWord, actor, dialect, rate, missingMsg, onComplete, requestId) {
+      if (requestId !== state.playbackRequestId) return;
       showDialectAvailabilityNotice(`${missingMsg} (Strict ${dialect} mode — no ${dialect === 'UK' ? 'US' : 'UK'} audio substituted).`);
 
-      const localeVoice = isBrowserFallbackEnabled() ? selectStrictLocaleVoice(actor) : null;
+      const voices = isBrowserFallbackEnabled() ? await getSpeechVoices() : [];
+      if (requestId !== state.playbackRequestId) return;
+      const localeVoice = selectStrictLocaleVoice(actor, voices || []);
       if (localeVoice && 'speechSynthesis' in window) {
-        setWaveformActive(true, `Fallback (${dialect} Locale) · ${actor.name}: "${cleanWord}"`);
+        setWaveformActive(true, `Device voice · ${localeVoice.name} (${dialect}) · ${actor.name}`);
         const utterance = new SpeechSynthesisUtterance(cleanWord);
         utterance.lang = dialect === 'UK' ? 'en-GB' : 'en-US';
         utterance.voice = localeVoice;
@@ -923,15 +968,18 @@
         utterance.rate = rate;
 
         utterance.onend = () => {
+          if (requestId !== state.playbackRequestId) return;
           setWaveformActive(false, `${missingMsg} · Fallback Used`);
           if (onComplete) onComplete();
         };
         utterance.onerror = () => {
+          if (requestId !== state.playbackRequestId) return;
           setWaveformActive(false, missingMsg);
           if (onComplete) onComplete();
         };
         window.speechSynthesis.speak(utterance);
       } else {
+        if (requestId !== state.playbackRequestId) return;
         setWaveformActive(false, missingMsg);
         if (onComplete) onComplete();
       }
@@ -1285,13 +1333,17 @@
       state.readerTokens = rawTokens;
 
       const canvas = document.getElementById('interactiveReaderCanvas');
-      canvas.innerHTML = rawTokens.map((token, idx) => `
-        <span
-          id="reader-token-${idx}"
-          onclick="handleReaderWordClick(${idx})"
-          class="word-token inline-block px-1.5 py-0.5 my-0.5 rounded-md cursor-pointer font-medium"
-        >${token}</span>
-      `).join(' ');
+      const tokenElements = [];
+      rawTokens.forEach((token, idx) => {
+        if (idx > 0) tokenElements.push(document.createTextNode(' '));
+        const tokenElement = document.createElement('span');
+        tokenElement.id = `reader-token-${idx}`;
+        tokenElement.className = 'word-token inline-block px-1.5 py-0.5 my-0.5 rounded-md cursor-pointer font-medium';
+        tokenElement.textContent = token;
+        tokenElement.addEventListener('click', () => handleReaderWordClick(idx));
+        tokenElements.push(tokenElement);
+      });
+      canvas.replaceChildren(...tokenElements);
 
       document.getElementById('readerWordCount').textContent = `${rawTokens.length} words loaded`;
       setWaveformActive(false, 'Document Ready · Click Any Word');
