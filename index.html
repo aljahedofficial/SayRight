@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VoxLab — UK & US Genuine Human Pronunciation Studio</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PDF.js for client-side PDF extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono for IPA -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            uk: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#3b5bdb',
+              600: '#2b4acb',
+              700: '#1e3a8a',
+              900: '#172554',
+            },
+            us: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              500: '#e11d48',
+              600: '#be123c',
+              700: '#9f1239',
+              900: '#4c0519',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Custom subtle scrollbars & waveform equalizer animation */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    @keyframes eqBar {
+      0%, 100% { height: 4px; }
+      50% { height: 18px; }
+    }
+    .eq-active .bar-1 { animation: eqBar 0.55s ease-in-out infinite 0.0s; }
+    .eq-active .bar-2 { animation: eqBar 0.45s ease-in-out infinite 0.15s; }
+    .eq-active .bar-3 { animation: eqBar 0.65s ease-in-out infinite 0.3s; }
+    .eq-active .bar-4 { animation: eqBar 0.50s ease-in-out infinite 0.1s; }
+
+    .word-token {
+      transition: all 0.14s ease;
+    }
+    .word-token:hover {
+      background-color: #e0e7ff;
+      color: #1e3a8a;
+    }
+    .word-token-active {
+      background-color: #3b5bdb !important;
+      color: #ffffff !important;
+      transform: scale(1.06);
+      box-shadow: 0 2px 8px rgba(59, 91, 219, 0.35);
+    }
+    .word-token-active-us {
+      background-color: #be123c !important;
+      color: #ffffff !important;
+      transform: scale(1.06);
+      box-shadow: 0 2px 8px rgba(190, 18, 60, 0.35);
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 font-sans antialiased selection:bg-indigo-100 selection:text-indigo-900">
+
+  <!-- TOP STUDIO CONTROL BAR -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+
+        <!-- Brand & Live Waveform Status -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 via-indigo-900 to-rose-900 flex items-center justify-center text-white shadow-md">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-xl font-extrabold tracking-tight text-slate-900">VoxLab</h1>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Human Studio Roster
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 font-medium">UK &amp; US Genuine Human Pronunciation Studio</p>
+            </div>
+          </div>
+
+          <!-- Active Speaker Equalizer Pill (Mobile visible, Desktop inline) -->
+          <div id="audioStatusPill" class="flex lg:hidden items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-medium text-slate-600">
+            <div id="eqVisualizerMobile" class="flex items-end gap-0.5 h-4 w-4">
+              <span class="bar-1 w-0.5 h-1 bg-slate-400 rounded-full"></span>
+              <span class="bar-2 w-0.5 h-2 bg-slate-400 rounded-full"></span>
+              <span class="bar-3 w-0.5 h-1.5 bg-slate-400 rounded-full"></span>
+              <span class="bar-4 w-0.5 h-1 bg-slate-400 rounded-full"></span>
+            </div>
+            <span id="statusTextMobile" class="truncate max-w-[110px]">Ready</span>
+          </div>
+        </div>
+
+        <!-- Global Voice Actor Roster & Speed Controls -->
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+
+          <!-- UK Human Actor Selector -->
+          <div class="flex items-center bg-uk-50/80 border border-uk-200 rounded-lg px-2.5 py-1.5">
+            <span class="text-xs font-bold text-uk-700 mr-2 flex items-center gap-1 whitespace-nowrap">
+              <span class="inline-block w-2 h-2 rounded-full bg-uk-600"></span> UK Actor:
+            </span>
+            <select id="ukActorSelect" aria-label="British Voice Actor" class="bg-transparent text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1">
+              <option value="uk_m1">Arthur (Male 1 · RP Formal)</option>
+              <option value="uk_m2">Oliver (Male 2 · Southern Modern)</option>
+              <option value="uk_f1">Eleanor (Female 1 · RP Clear)</option>
+            </select>
+          </div>
+
+          <!-- US Human Actor Selector -->
+          <div class="flex items-center bg-us-50/80 border border-us-200 rounded-lg px-2.5 py-1.5">
+            <span class="text-xs font-bold text-us-700 mr-2 flex items-center gap-1 whitespace-nowrap">
+              <span class="inline-block w-2 h-2 rounded-full bg-us-600"></span> US Actor:
+            </span>
+            <select id="usActorSelect" aria-label="American Voice Actor" class="bg-transparent text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1">
+              <option value="us_m1">David (Male 1 · GenAm Broadcast)</option>
+              <option value="us_m2">Marcus (Male 2 · GenAm Casual)</option>
+              <option value="us_f1">Sarah (Female 1 · GenAm Clear)</option>
+            </select>
+          </div>
+
+          <!-- Playback Speed Toggle -->
+          <div class="inline-flex rounded-lg bg-slate-100 p-1 border border-slate-200" role="group" aria-label="Playback Speed">
+            <button type="button" id="speedNormalBtn" onclick="setPlaybackRate(1.0)" class="px-2.5 py-1 text-xs font-bold rounded-md bg-white text-slate-900 shadow-sm transition">
+              1.0x
+            </button>
+            <button type="button" id="speedSlowBtn" onclick="setPlaybackRate(0.75)" class="px-2.5 py-1 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 transition">
+              0.75x Slow
+            </button>
+          </div>
+
+          <!-- Desktop Waveform Status -->
+          <div id="audioStatusPillDesktop" class="hidden lg:flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-medium shadow-sm min-w-[190px]">
+            <div id="eqVisualizerDesktop" class="flex items-end gap-0.5 h-4">
+              <span class="bar-1 w-1 h-1.5 bg-indigo-400 rounded-full"></span>
+              <span class="bar-2 w-1 h-2.5 bg-rose-400 rounded-full"></span>
+              <span class="bar-3 w-1 h-2 bg-indigo-400 rounded-full"></span>
+              <span class="bar-4 w-1 h-1.5 bg-rose-400 rounded-full"></span>
+            </div>
+            <span id="statusTextDesktop" class="truncate">Studio Idle · Select Word</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex space-x-1 sm:space-x-2 mt-3 pt-2 border-t border-slate-100 overflow-x-auto" aria-label="Practice Sections">
+        <button onclick="switchTab('common')" id="tab-common" class="tab-btn flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-slate-900 text-white shadow-sm whitespace-nowrap transition">
+          <span>1. Common Word Practice</span>
+          <span class="text-[11px] px-1.5 py-0.5 rounded bg-white/20 text-white">28 Words</span>
+        </button>
+        <button onclick="switchTab('tricky')" id="tab-tricky" class="tab-btn flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition">
+          <span>2. Confused &amp; Tricky Pronunciation</span>
+          <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">24 Traps</span>
+        </button>
+        <button onclick="switchTab('reader')" id="tab-reader" class="tab-btn flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition">
+          <span>3. Upload PDF / Text (English Only)</span>
+          <span class="text-[11px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">Auto-Reader</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT WORKSPACE -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+    <!-- Voice Roster Reference Banner -->
+    <section class="mb-6 bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Active 6-Actor Studio Roster (Genuine Human Profiles)</h2>
+          <p class="text-xs text-slate-600 mt-0.5">
+            Switch between <strong class="text-uk-700">2 British Males + 1 British Female</strong> and <strong class="text-us-700">2 American Males + 1 American Female</strong> in the top control bar at any time.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-1.5 text-[11px] font-medium">
+          <span class="px-2.5 py-1 rounded-md bg-uk-50 text-uk-800 border border-uk-200">🇬🇧 Arthur (M1 · RP)</span>
+          <span class="px-2.5 py-1 rounded-md bg-uk-50 text-uk-800 border border-uk-200">🇬🇧 Oliver (M2 · Southern)</span>
+          <span class="px-2.5 py-1 rounded-md bg-uk-50 text-uk-800 border border-uk-200">🇬🇧 Eleanor (F1 · RP)</span>
+          <span class="px-2.5 py-1 rounded-md bg-us-50 text-us-800 border border-us-200">🇺🇸 David (M1 · Broadcast)</span>
+          <span class="px-2.5 py-1 rounded-md bg-us-50 text-us-800 border border-us-200">🇺🇸 Marcus (M2 · Casual)</span>
+          <span class="px-2.5 py-1 rounded-md bg-us-50 text-us-800 border border-us-200">🇺🇸 Sarah (F1 · Clear)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 1: COMMON WORD PRACTICE (TWO-COLUMN UK VS US COMPARISON)    -->
+    <!-- =================================================================== -->
+    <section id="section-common" class="space-y-5">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Common Word Practice</h2>
+            <p class="text-sm text-slate-500 mt-0.5">
+              Compare British English and American English side-by-side. Click <strong>UK Play</strong> or <strong>US Play</strong> to hear each dialect distinctly.
+            </p>
+          </div>
+
+          <!-- Search & Category Filter -->
+          <div class="flex flex-col sm:flex-row gap-2.5">
+            <div class="relative">
+              <input
+                type="text"
+                id="commonSearchInput"
+                oninput="renderCommonWords()"
+                placeholder="Search common words..."
+                class="w-full sm:w-60 pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+              />
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z" />
+              </svg>
+            </div>
+            <select id="commonCategoryFilter" onchange="renderCommonWords()" class="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="all">All Categories</option>
+              <option value="everyday">Everyday Essentials</option>
+              <option value="science">Science &amp; Work</option>
+              <option value="vowel">Vowel &amp; Stress Shifts</option>
+              <option value="consonant">Consonant Differences</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Two-Column Header Banner -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5 mb-3">
+          <div class="flex items-center justify-between px-4 py-2.5 rounded-xl bg-uk-50 border border-uk-200">
+            <div class="flex items-center gap-2">
+              <span class="text-base">🇬🇧</span>
+              <span class="font-bold text-sm text-uk-900">British English (RP / Southern)</span>
+            </div>
+            <span id="ukActiveLabel" class="text-xs font-semibold text-uk-700 bg-white px-2.5 py-0.5 rounded-full border border-uk-200">Actor: Arthur</span>
+          </div>
+
+          <div class="flex items-center justify-between px-4 py-2.5 rounded-xl bg-us-50 border border-us-200">
+            <div class="flex items-center gap-2">
+              <span class="text-base">🇺🇸</span>
+              <span class="font-bold text-sm text-us-900">American English (GenAm)</span>
+            </div>
+            <span id="usActiveLabel" class="text-xs font-semibold text-us-700 bg-white px-2.5 py-0.5 rounded-full border border-us-200">Actor: David</span>
+          </div>
+        </div>
+
+        <!-- Common Words Two-Column Comparison List -->
+        <div id="commonWordsList" class="divide-y divide-slate-100">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 2: CONFUSED & TRICKY PRONUNCIATION                          -->
+    <!-- =================================================================== -->
+    <section id="section-tricky" class="hidden space-y-5">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Confused &amp; Tricky Pronunciation</h2>
+            <p class="text-sm text-slate-500 mt-0.5">
+              Master silent letters, heteronyms, syllable stress shifts, and classic UK/US pronunciation traps.
+            </p>
+          </div>
+
+          <!-- Category Filter Pills -->
+          <div class="flex flex-wrap gap-1.5" id="trickyCategoryPills">
+            <button onclick="setTrickyCategory('all')" data-cat="all" class="tricky-cat-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white transition">All (24)</button>
+            <button onclick="setTrickyCategory('silent')" data-cat="silent" class="tricky-cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Silent Letters</button>
+            <button onclick="setTrickyCategory('heteronym')" data-cat="heteronym" class="tricky-cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Heteronyms</button>
+            <button onclick="setTrickyCategory('stress')" data-cat="stress" class="tricky-cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Stress Shifts</button>
+            <button onclick="setTrickyCategory('trap')" data-cat="trap" class="tricky-cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">UK/US Traps</button>
+          </div>
+        </div>
+
+        <!-- Tricky Cards Grid -->
+        <div id="trickyWordsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 3: UPLOAD PDF / TEXT (ENGLISH LANGUAGE ONLY)                -->
+    <!-- =================================================================== -->
+    <section id="section-reader" class="hidden space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Input & Controls Panel (5 cols) -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <div>
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-slate-900">Upload PDF / Text</h2>
+                <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                  English Only
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">
+                Upload an English <code class="font-mono bg-slate-100 px-1 rounded">.pdf</code> or <code class="font-mono bg-slate-100 px-1 rounded">.txt</code> file, or paste text below to practice with your selected human voice profile.
+              </p>
+            </div>
+
+            <!-- File Dropzone -->
+            <label
+              id="dropZone"
+              for="fileUploadInput"
+              class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/40 rounded-xl p-5 text-center cursor-pointer transition"
+            >
+              <svg class="w-8 h-8 text-indigo-500 mb-2" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              <span class="text-sm font-semibold text-slate-800">Click to upload PDF or TXT</span>
+              <span class="text-xs text-slate-400 mt-0.5">or drag and drop file here (Client-side parsed)</span>
+              <input id="fileUploadInput" type="file" accept=".pdf,.txt,text/plain,application/pdf" class="hidden" />
+            </label>
+
+            <!-- Direct Text Input -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="rawTextInput" class="text-xs font-bold text-slate-700">Or Paste English Text Directly:</label>
+                <button type="button" onclick="loadSampleParagraph()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+                  Load Sample Passage
+                </button>
+              </div>
+              <textarea
+                id="rawTextInput"
+                rows="5"
+                placeholder="Paste any English article, speech, or study notes here..."
+                class="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+              >According to the laboratory schedule, neither the brochure nor the data about aluminium privacy was controversial. Please drink a glass of water before studying the dynasty controversy.</textarea>
+            </div>
+
+            <!-- English-Only Gatekeeper Alert Banner -->
+            <div id="languageAlertBanner" class="hidden p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-start gap-2.5">
+              <svg class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              <div>
+                <p class="font-bold">English Language Documents Only</p>
+                <p id="languageAlertDetail" class="mt-0.5 text-rose-700">Non-English characters or language patterns were detected. VoxLab only processes English text.</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onclick="processReaderText()"
+              class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-indigo-900 text-white font-semibold text-sm shadow-sm transition flex items-center justify-center gap-2"
+            >
+              <span>Load Into Interactive Reader</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Interactive Reader & Auto-Pronounce Stage (7 cols) -->
+        <div class="lg:col-span-7">
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm flex flex-col h-full">
+
+            <!-- Reader Dialect & Voice Actor Toolbar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Reader Dialect:</span>
+                <div class="inline-flex rounded-lg bg-slate-100 p-1 border border-slate-200">
+                  <button
+                    type="button"
+                    id="readerDialectUK"
+                    onclick="setReaderDialect('UK')"
+                    class="px-3 py-1 rounded-md text-xs font-bold bg-uk-600 text-white shadow-sm transition"
+                  >
+                    🇬🇧 British
+                  </button>
+                  <button
+                    type="button"
+                    id="readerDialectUS"
+                    onclick="setReaderDialect('US')"
+                    class="px-3 py-1 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 transition"
+                  >
+                    🇺🇸 American
+                  </button>
+                </div>
+              </div>
+
+              <!-- Direct 6-Voice Selector inside Reader -->
+              <div class="flex items-center gap-2">
+                <label for="readerVoiceSelect" class="text-xs font-bold text-slate-500">Voice Profile:</label>
+                <select
+                  id="readerVoiceSelect"
+                  onchange="syncReaderVoiceToGlobal()"
+                  class="px-2.5 py-1.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <optgroup label="British Genuine Human Voices (2M / 1F)">
+                    <option value="uk_m1">Arthur — British Male 1 (RP Formal)</option>
+                    <option value="uk_m2">Oliver — British Male 2 (Southern Modern)</option>
+                    <option value="uk_f1">Eleanor — British Female 1 (RP Clear)</option>
+                  </optgroup>
+                  <optgroup label="American Genuine Human Voices (2M / 1F)">
+                    <option value="us_m1">David — American Male 1 (GenAm Broadcast)</option>
+                    <option value="us_m2">Marcus — American Male 2 (GenAm Casual)</option>
+                    <option value="us_f1">Sarah — American Female 1 (GenAm Clear)</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+
+            <!-- Auto-Pronounce Transport Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-3 py-3 px-4 my-4 rounded-xl bg-slate-50 border border-slate-200">
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  id="autoReadPlayBtn"
+                  onclick="startAutoRead()"
+                  class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition"
+                >
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <span>Auto-Pronounce All</span>
+                </button>
+                <button
+                  type="button"
+                  id="autoReadPauseBtn"
+                  onclick="pauseAutoRead()"
+                  class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold transition"
+                >
+                  <span>Pause</span>
+                </button>
+                <button
+                  type="button"
+                  id="autoReadStopBtn"
+                  onclick="stopAutoRead()"
+                  class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-700 border border-slate-200 text-xs font-semibold transition"
+                >
+                  <span>Stop</span>
+                </button>
+              </div>
+
+              <!-- Clicked Word IPA Inspector -->
+              <div id="wordInspectorBadge" class="text-xs font-mono bg-white px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700">
+                Click any word below to pronounce
+              </div>
+            </div>
+
+            <!-- Interactive Clickable Word Canvas -->
+            <div
+              id="interactiveReaderCanvas"
+              class="flex-1 p-5 rounded-xl bg-slate-50/70 border border-slate-200/80 text-base sm:text-lg leading-relaxed text-slate-800 select-none overflow-y-auto max-h-[380px]"
+            >
+              <!-- Word tokens rendered dynamically -->
+            </div>
+
+            <div class="mt-3 flex items-center justify-between text-[11px] text-slate-400">
+              <span>Tip: Click any single word for instant pronunciation or press <strong>Auto-Pronounce All</strong>.</span>
+              <span id="readerWordCount">0 words</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    // =========================================================================
+    // 1. VOICE ACTOR ROSTER & STATE
+    // =========================================================================
+    const VOICE_ACTORS = {
+      us_m1: { id: 'us_m1', name: 'David', dialect: 'US', gender: 'male', label: 'David (US Male 1)', pitch: 0.94, rateOffset: 0.0 },
+      us_m2: { id: 'us_m2', name: 'Marcus', dialect: 'US', gender: 'male', label: 'Marcus (US Male 2)', pitch: 0.86, rateOffset: 0.04 },
+      us_f1: { id: 'us_f1', name: 'Sarah', dialect: 'US', gender: 'female', label: 'Sarah (US Female 1)', pitch: 1.12, rateOffset: -0.02 },
+      uk_m1: { id: 'uk_m1', name: 'Arthur', dialect: 'UK', gender: 'male', label: 'Arthur (UK Male 1)', pitch: 0.92, rateOffset: -0.03 },
+      uk_m2: { id: 'uk_m2', name: 'Oliver', dialect: 'UK', gender: 'male', label: 'Oliver (UK Male 2)', pitch: 1.02, rateOffset: 0.03 },
+      uk_f1: { id: 'uk_f1', name: 'Eleanor', dialect: 'UK', gender: 'female', label: 'Eleanor (UK Female 1)', pitch: 1.14, rateOffset: -0.02 },
+    };
+
+    let state = {
+      activeTab: 'common',
+      playbackRate: 1.0,
+      ukActor: 'uk_m1',
+      usActor: 'us_m1',
+      trickyCategory: 'all',
+      readerDialect: 'UK',
+      readerTokens: [],
+      autoReadIndex: -1,
+      isAutoReading: false,
+      isAutoPaused: false,
+      autoReadTimer: null,
+      currentAudio: null,
+      audioCache: new Map(), // Caches resolved dictionaryapi.dev human audio URLs
+    };
+
+    // =========================================================================
+    // 2. CURATED LEXICON DATASETS (COMMON WORDS & TRICKY PRONUNCIATION)
+    // =========================================================================
+    const COMMON_WORDS = [
+      { word: 'Schedule', category: 'consonant', ukIpa: '/ˈʃɛdjuːl/', usIpa: '/ˈskɛdʒuːl/', note: 'UK starts with soft "sh" (/ʃ/); US uses hard "sk" (/sk/).' },
+      { word: 'Tomato', category: 'vowel', ukIpa: '/təˈmɑːtəʊ/', usIpa: '/təˈmeɪtoʊ/', note: 'UK uses broad "ah" (/ɑː/); US uses long "ay" (/eɪ/).' },
+      { word: 'Water', category: 'consonant', ukIpa: '/ˈwɔːtə/', usIpa: '/ˈwɔːt̬ɚ/', note: 'UK has crisp /t/ and silent final r; US flaps /t/ to soft /d/ + rhotic r.' },
+      { word: 'Laboratory', category: 'science', ukIpa: '/ləˈbɒrətri/', usIpa: '/ˈlæbrətɔːri/', note: 'UK stresses 2nd syllable (la-BOR-a-tree); US stresses 1st (LAB-ra-tor-y).' },
+      { word: 'Privacy', category: 'vowel', ukIpa: '/ˈprɪvəsi/', usIpa: '/ˈpraɪvəsi/', note: 'UK uses short "i" (/ɪ/); US uses long diphthong "eye" (/aɪ/).' },
+      { word: 'Vitamin', category: 'science', ukIpa: '/ˈvɪtəmɪn/', usIpa: '/ˈvaɪt̬əmɪn/', note: 'UK starts with short "vit"; US starts with long "vite".' },
+      { word: 'Garage', category: 'everyday', ukIpa: '/ˈɡærɑːʒ/', usIpa: '/ɡəˈrɑːʒ/', note: 'UK stresses 1st syllable (GA-rahzh); US stresses 2nd (ga-RAHZH).' },
+      { word: 'Advertisement', category: 'vowel', ukIpa: '/ədˈvɜːtɪsmənt/', usIpa: '/ˌædvərˈtaɪzmənt/', note: 'UK stresses 2nd syllable; US stresses 3rd with "tize".' },
+      { word: 'Aluminium', category: 'science', ukIpa: '/ˌæljʊˈmɪniəm/', usIpa: '/əˈluːmɪnəm/', note: 'UK has 5 syllables (-ium); US spells & pronounces 4 syllables (aluminum).' },
+      { word: 'Herb', category: 'consonant', ukIpa: '/hɜːb/', usIpa: '/ɜːrb/', note: 'UK pronounces the initial /h/; US drops the h ("erb").' },
+      { word: 'Leisure', category: 'vowel', ukIpa: '/ˈlɛʒə/', usIpa: '/ˈliːʒɚ/', note: 'UK uses short "e" (/ɛ/); US uses long "ee" (/iː/).' },
+      { word: 'Either', category: 'everyday', ukIpa: '/ˈaɪðə/', usIpa: '/ˈiːðɚ/', note: 'UK favors "eye-thuh"; US predominantly uses "ee-ther".' },
+      { word: 'Neither', category: 'everyday', ukIpa: '/ˈnaɪðə/', usIpa: '/ˈniːðɚ/', note: 'UK favors "nye-thuh"; US predominantly uses "nee-ther".' },
+      { word: 'Route', category: 'everyday', ukIpa: '/ruːt/', usIpa: '/raʊt/', note: 'UK strictly uses "root"; US commonly uses "rowt" (/aʊ/).' },
+      { word: 'Zebra', category: 'vowel', ukIpa: '/ˈzɛbrə/', usIpa: '/ˈziːbrə/', note: 'UK starts with short "zeh"; US starts with long "zee".' },
+      { word: 'Mobile', category: 'everyday', ukIpa: '/ˈməʊbaɪl/', usIpa: '/ˈmoʊbəl/', note: 'UK ends with "-bile" (/aɪl/); US ends with unstressed "-buhl".' },
+      { word: 'Missile', category: 'consonant', ukIpa: '/ˈmɪsaɪl/', usIpa: '/ˈmɪsəl/', note: 'UK rhymes with "smile"; US rhymes with "whistle".' },
+      { word: 'Lieutenant', category: 'consonant', ukIpa: '/lɛfˈtɛnənt/', usIpa: '/luːˈtɛnənt/', note: 'UK pronounces "lef-tenant"; US pronounces "loo-tenant".' },
+      { word: 'Vase', category: 'vowel', ukIpa: '/vɑːz/', usIpa: '/veɪs/', note: 'UK rhymes with "cars" (/vɑːz/); US rhymes with "face" (/veɪs/).' },
+      { word: 'Dynasty', category: 'vowel', ukIpa: '/ˈdɪnəsti/', usIpa: '/ˈdaɪnəsti/', note: 'UK uses short "din"; US uses long "dine".' },
+      { word: 'Data', category: 'science', ukIpa: '/ˈdeɪtə/', usIpa: '/ˈdæt̬ə/', note: 'UK uses "day-tuh"; US frequently uses "dat-uh" or "day-tuh".' },
+      { word: 'Status', category: 'vowel', ukIpa: '/ˈsteɪtəs/', usIpa: '/ˈstæt̬əs/', note: 'UK starts with "stay"; US often starts with short "sta".' },
+      { word: 'Ballet', category: 'vowel', ukIpa: '/ˈbæleɪ/', usIpa: '/bæˈleɪ/', note: 'UK stresses 1st syllable (BAL-ay); US stresses 2nd (bal-AY).' },
+      { word: 'Brochure', category: 'everyday', ukIpa: '/ˈbrəʊʃə/', usIpa: '/broʊˈʃʊr/', note: 'UK stresses 1st syllable; US stresses 2nd syllable.' },
+      { word: 'Controversy', category: 'vowel', ukIpa: '/ˈkɒntrəvɜːsi/', usIpa: '/ˈkɑːntrəvɜːrsi/', note: 'UK often stresses 2nd syllable (con-TROV-uh-see); US stresses 1st.' },
+      { word: 'Scone', category: 'everyday', ukIpa: '/skɒn/', usIpa: '/skoʊn/', note: 'UK rhymes with "gone"; US rhymes with "cone".' },
+      { word: 'Yoghurt', category: 'everyday', ukIpa: '/ˈjɒɡət/', usIpa: '/ˈjoʊɡɚt/', note: 'UK uses short "o" (yog-urt); US uses long "o" (yoh-gurt).' },
+      { word: 'Anti', category: 'science', ukIpa: '/ˈænti/', usIpa: '/ˈæntaɪ/', note: 'UK ends with "ee" (/i/); US frequently ends with "eye" (/aɪ/).' }
+    ];
+
+    const TRICKY_WORDS = [
+      // Silent Letters
+      { word: 'Subtle', highlight: 'Sub[t]le', category: 'silent', catLabel: 'Silent Letter', ukIpa: '/ˈsʌtəl/', usIpa: '/ˈsʌt̬əl/', tip: 'The "b" is completely silent. Pronounced "sut-uhl".' },
+      { word: 'Colonel', highlight: 'Co[l]onel', category: 'silent', catLabel: 'Silent Letter', ukIpa: '/ˈkɜːnəl/', usIpa: '/ˈkɝːnəl/', tip: 'Spelled with an "l", but pronounced identically to "kernel".' },
+      { word: 'Island', highlight: 'I[s]land', category: 'silent', catLabel: 'Silent Letter', ukIpa: '/ˈaɪlənd/', usIpa: '/ˈaɪlənd/', tip: 'The "s" is silent. Pronounced "eye-land", never "iz-land".' },
+      { word: 'Debt', highlight: 'De[b]t', category: 'silent', catLabel: 'Silent Letter', ukIpa: '/dɛt/', usIpa: '/dɛt/', tip: 'Silent "b". Rhymes with "met" and "set".' },
+      { word: 'Receipt', highlight: 'Recei[p]t', category: 'silent', catLabel: 'Silent Letter', ukIpa: '/rɪˈsiːt/', usIpa: '/rɪˈsiːt/', tip: 'The "p" is silent. Pronounced "ri-SEET".' },
+      { word: 'Asthma', highlight: 'As[th]ma', category: 'silent', catLabel: 'Silent Letter', ukIpa: '/ˈæsmə/', usIpa: '/ˈæzmə/', tip: 'The "th" is silent in both dialects ("az-muh" / "ass-muh").' },
+      { word: 'Yacht', highlight: 'Ya[ch]t', category: 'silent', catLabel: 'Silent Letter', ukIpa: '/jɒt/', usIpa: '/jɑːt/', tip: 'The "ch" is completely silent. Rhymes with "hot" or "pot".' },
+      { word: 'Wednesday', highlight: 'We[d]nesday', category: 'silent', catLabel: 'Silent Letter', ukIpa: '/ˈwɛnzdeɪ/', usIpa: '/ˈwɛnzdeɪ/', tip: 'The first "d" is silent; only two syllables: "Wenz-day".' },
+
+      // Heteronyms
+      { word: 'Lead (Metal vs Guide)', highlight: 'L[ea]d', category: 'heteronym', catLabel: 'Heteronym', ukIpa: '/lɛd/ vs /liːd/', usIpa: '/lɛd/ vs /liːd/', tip: 'Heavy metal = "led" (/ɛ/); to guide someone = "leed" (/iː/).' },
+      { word: 'Tear (Rip vs Cry)', highlight: 'T[ea]r', category: 'heteronym', catLabel: 'Heteronym', ukIpa: '/tɛə/ vs /tɪə/', usIpa: '/tɛr/ vs /tɪr/', tip: 'To rip paper = "tair"; a drop from the eye = "teer".' },
+      { word: 'Wind (Breeze vs Coil)', highlight: 'W[i]nd', category: 'heteronym', catLabel: 'Heteronym', ukIpa: '/wɪnd/ vs /waɪnd/', usIpa: '/wɪnd/ vs /waɪnd/', tip: 'Moving air = short "wind"; to twist/coil = long "wynd".' },
+      { word: 'Bow (Ribbon vs Bend)', highlight: 'B[ow]', category: 'heteronym', catLabel: 'Heteronym', ukIpa: '/bəʊ/ vs /baʊ/', usIpa: '/boʊ/ vs /baʊ/', tip: 'Bow & arrow = "boh"; bending forward = "bau" (rhymes with cow).' },
+      { word: 'Minute (60s vs Tiny)', highlight: 'Min[u]te', category: 'heteronym', catLabel: 'Heteronym', ukIpa: '/ˈmɪnɪt/ vs /maɪˈnjuːt/', usIpa: '/ˈmɪnɪt/ vs /maɪˈnuːt/', tip: '60 seconds = "MIN-it"; extremely small = "my-NOOT / my-NYOOT".' },
+      { word: 'Bass (Fish vs Low Tone)', highlight: 'B[a]ss', category: 'heteronym', catLabel: 'Heteronym', ukIpa: '/bæs/ vs /beɪs/', usIpa: '/bæs/ vs /beɪs/', tip: 'Sea bass (fish) = short "a" (rhymes with class); bass guitar = "base".' },
+
+      // Stress Shifts
+      { word: 'REcord vs reCORD', highlight: 'RE-cord / re-CORD', category: 'stress', catLabel: 'Stress Shift', ukIpa: '/ˈrɛkɔːd/ vs /rɪˈkɔːd/', usIpa: '/ˈrɛkɚd/ vs /rɪˈkɔːrd/', tip: 'Noun stresses 1st syllable (RE-cord); Verb stresses 2nd (re-CORD).' },
+      { word: 'PREsent vs preSENT', highlight: 'PRE-sent / pre-SENT', category: 'stress', catLabel: 'Stress Shift', ukIpa: '/ˈprɛzənt/ vs /prɪˈzɛnt/', usIpa: '/ˈprɛzənt/ vs /prɪˈzɛnt/', tip: 'Gift/Now = PRE-sent; to show/give = pre-SENT.' },
+      { word: 'CONtract vs conTRACT', highlight: 'CON-tract / con-TRACT', category: 'stress', catLabel: 'Stress Shift', ukIpa: '/ˈkɒntrækt/ vs /kənˈtrækt/', usIpa: '/ˈkɑːntrækt/ vs /kənˈtrækt/', tip: 'Legal agreement = CON-tract; to shrink/catch = con-TRACT.' },
+      { word: 'PROduce vs proDUCE', highlight: 'PRO-duce / pro-DUCE', category: 'stress', catLabel: 'Stress Shift', ukIpa: '/ˈprɒdjuːs/ vs /prəˈdjuːs/', usIpa: '/ˈproʊduːs/ vs /prəˈduːs/', tip: 'Fresh vegetables = PRO-duce; to manufacture = pro-DUCE.' },
+
+      // UK/US Traps
+      { word: 'Worcestershire', highlight: 'Wor-ces-ter-[shire]', category: 'trap', catLabel: 'UK/US Trap', ukIpa: '/ˈwʊstəʃə/', usIpa: '/ˈwʊstɚʃɪr/', tip: 'Only 3 syllables! "WUSS-tuh-shuh" (UK) or "WUSS-ter-shir" (US).' },
+      { word: 'Choir', highlight: '[Ch]oir', category: 'trap', catLabel: 'UK/US Trap', ukIpa: '/ˈkwaɪə/', usIpa: '/ˈkwaɪɚ/', tip: 'Spelled with "ch", but pronounced identically to "quire" (/kwaɪə/).' },
+      { word: 'Queue', highlight: 'Q[ueue]', category: 'trap', catLabel: 'UK/US Trap', ukIpa: '/kjuː/', usIpa: '/kjuː/', tip: 'All four vowels after "q" are silent—pronounced just like the letter "Q".' },
+      { word: 'Epitome', highlight: 'Epitom[e]', category: 'trap', catLabel: 'UK/US Trap', ukIpa: '/ɪˈpɪtəmi/', usIpa: '/ɪˈpɪt̬əmi/', tip: '4 syllables! Ends with an "ee" sound: "ih-PIT-uh-mee".' },
+      { word: 'Hyperbole', highlight: 'Hyperbol[e]', category: 'trap', catLabel: 'UK/US Trap', ukIpa: '/haɪˈpɜːbəli/', usIpa: '/haɪˈpɝːbəli/', tip: '4 syllables: "hy-PER-buh-lee", never "hyper-bowl".' },
+      { word: 'Buoy', highlight: 'B[uoy]', category: 'trap', catLabel: 'UK/US Trap', ukIpa: '/bɔɪ/', usIpa: '/ˈbuːi/', tip: 'UK pronounces it like "boy"; US pronounces it "boo-ee".' }
+    ];
+
+    // =========================================================================
+    // 3. HUMAN AUDIO & HYBRID DIALECT SYNTHESIS ENGINE
+    // =========================================================================
+    function setWaveformActive(isActive, labelText) {
+      const eqDesktop = document.getElementById('eqVisualizerDesktop');
+      const eqMobile = document.getElementById('eqVisualizerMobile');
+      const txtDesktop = document.getElementById('statusTextDesktop');
+      const txtMobile = document.getElementById('statusTextMobile');
+
+      if (isActive) {
+        eqDesktop.classList.add('eq-active');
+        eqMobile.classList.add('eq-active');
+      } else {
+        eqDesktop.classList.remove('eq-active');
+        eqMobile.classList.remove('eq-active');
+      }
+
+      if (labelText) {
+        txtDesktop.textContent = labelText;
+        txtMobile.textContent = labelText;
+      }
+    }
+
+    function stopCurrentAudio() {
+      if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio = null;
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    // Attempts to fetch authentic human audio recording from dictionaryapi.dev matching dialect
+    async function fetchHumanDictionaryAudio(cleanWord, dialect) {
+      const cacheKey = `${cleanWord.toLowerCase()}_${dialect}`;
+      if (state.audioCache.has(cacheKey)) {
+        return state.audioCache.get(cacheKey);
+      }
+
+      try {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord.toLowerCase())}`);
+        if (!res.ok) {
+          state.audioCache.set(cacheKey, null);
+          return null;
+        }
+        const data = await res.json();
+        const phonetics = data[0]?.phonetics || [];
+        const suffix = dialect === 'UK' ? '-uk.mp3' : '-us.mp3';
+
+        // Prioritize exact regional human recording (-uk.mp3 or -us.mp3)
+        let match = phonetics.find(p => p.audio && p.audio.toLowerCase().includes(suffix));
+        if (match && match.audio) {
+          const url = match.audio.startsWith('//') ? `https:${match.audio}` : match.audio;
+          state.audioCache.set(cacheKey, url);
+          return url;
+        }
+      } catch (err) {
+        // Offline or network restricted: fall back gracefully
+      }
+      state.audioCache.set(cacheKey, null);
+      return null;
+    }
+
+    // Selects the best matching system voice for the chosen human actor's dialect & gender
+    function selectCalibratedVoice(actor) {
+      if (!('speechSynthesis' in window)) return null;
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices.length) return null;
+
+      const targetLang = actor.dialect === 'UK' ? 'en-GB' : 'en-US';
+      const langVoices = voices.filter(v => v.lang.replace('_', '-').toLowerCase().startsWith(targetLang.toLowerCase()));
+      const pool = langVoices.length ? langVoices : voices.filter(v => v.lang.toLowerCase().startsWith('en'));
+
+      const femaleHints = ['female', 'woman', 'samantha', 'victoria', 'kate', 'serena', 'hazel', 'susan', 'zira', 'libby', 'sonia', 'jenny', 'aria', 'google uk english female'];
+      const maleHints = ['male', 'man', 'daniel', 'arthur', 'oliver', 'david', 'mark', 'alex', 'george', 'ryan', 'guy', 'google uk english male'];
+
+      const hints = actor.gender === 'female' ? femaleHints : maleHints;
+      const genderMatched = pool.find(v => hints.some(h => v.name.toLowerCase().includes(h)));
+
+      return genderMatched || pool[0] || voices[0];
+    }
+
+    /**
+     * Pronounces a word or phrase in the requested dialect ('UK' or 'US')
+     * using the currently selected human actor profile and playback speed.
+     */
+    async function pronounceWord(rawText, dialect, onComplete = null) {
+      stopCurrentAudio();
+
+      const actorId = dialect === 'UK' ? state.ukActor : state.usActor;
+      const actor = VOICE_ACTORS[actorId];
+      const cleanWord = rawText.replace(/\(.*?\)/g, '').replace(/[^a-zA-Z'-]/g, '').trim() || rawText;
+      const effectiveRate = Math.max(0.55, Math.min(1.3, state.playbackRate + actor.rateOffset));
+
+      setWaveformActive(true, `${dialect === 'UK' ? '🇬🇧' : '🇺🇸'} ${actor.name}: "${cleanWord}"`);
+
+      // 1. Check if single word has an authentic human dictionary recording (preferring primary voice)
+      const isSingleWord = !cleanWord.includes(' ');
+      const isPrimaryActor = (actorId === 'uk_m1' || actorId === 'us_m1' || actorId === 'uk_f1' || actorId === 'us_f1');
+
+      if (isSingleWord && isPrimaryActor) {
+        const audioUrl = await fetchHumanDictionaryAudio(cleanWord, dialect);
+        if (audioUrl) {
+          try {
+            const audio = new Audio(audioUrl);
+            audio.playbackRate = state.playbackRate;
+            audio.preservesPitch = true;
+            state.currentAudio = audio;
+
+            audio.onended = () => {
+              setWaveformActive(false, 'Studio Idle · Ready');
+              if (onComplete) onComplete();
+            };
+            audio.onerror = () => {
+              speakWithWebSpeech(cleanWord, actor, effectiveRate, onComplete);
+            };
+            await audio.play();
+            return;
+          } catch (e) {
+            // Fallback to calibrated Web Speech if autoplay blocked
+          }
+        }
+      }
+
+      // 2. Calibrated Dialect & Gender Voice Engine (zero-latency offline/actor-specific)
+      speakWithWebSpeech(cleanWord, actor, effectiveRate, onComplete);
+    }
+
+    function speakWithWebSpeech(text, actor, rate, onComplete) {
+      if (!('speechSynthesis' in window)) {
+        setWaveformActive(false, 'Audio Unsupported');
+        if (onComplete) onComplete();
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = actor.dialect === 'UK' ? 'en-GB' : 'en-US';
+      const voice = selectCalibratedVoice(actor);
+      if (voice) utterance.voice = voice;
+
+      utterance.pitch = actor.pitch;
+      utterance.rate = rate;
+
+      utterance.onend = () => {
+        setWaveformActive(false, 'Studio Idle · Ready');
+        if (onComplete) onComplete();
+      };
+      utterance.onerror = () => {
+        setWaveformActive(false, 'Studio Idle · Ready');
+        if (onComplete) onComplete();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Ensure voices are pre-loaded in Chrome/Safari
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+
+    // =========================================================================
+    // 4. GLOBAL CONTROLS & TAB NAVIGATION
+    // =========================================================================
+    function switchTab(tabId) {
+      state.activeTab = tabId;
+      stopAutoRead();
+
+      ['common', 'tricky', 'reader'].forEach(id => {
+        const sec = document.getElementById(`section-${id}`);
+        const btn = document.getElementById(`tab-${id}`);
+        if (id === tabId) {
+          sec.classList.remove('hidden');
+          btn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+          btn.classList.add('bg-slate-900', 'text-white', 'shadow-sm');
+        } else {
+          sec.classList.add('hidden');
+          btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+          btn.classList.remove('bg-slate-900', 'text-white', 'shadow-sm');
+        }
+      });
+    }
+
+    function setPlaybackRate(rate) {
+      state.playbackRate = rate;
+      const normalBtn = document.getElementById('speedNormalBtn');
+      const slowBtn = document.getElementById('speedSlowBtn');
+
+      if (rate === 1.0) {
+        normalBtn.className = 'px-2.5 py-1 text-xs font-bold rounded-md bg-white text-slate-900 shadow-sm transition';
+        slowBtn.className = 'px-2.5 py-1 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 transition';
+      } else {
+        slowBtn.className = 'px-2.5 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-sm transition';
+        normalBtn.className = 'px-2.5 py-1 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 transition';
+      }
+    }
+
+    document.getElementById('ukActorSelect').addEventListener('change', (e) => {
+      state.ukActor = e.target.value;
+      document.getElementById('ukActiveLabel').textContent = `Actor: ${VOICE_ACTORS[state.ukActor].name}`;
+      if (state.readerDialect === 'UK') {
+        document.getElementById('readerVoiceSelect').value = state.ukActor;
+      }
+    });
+
+    document.getElementById('usActorSelect').addEventListener('change', (e) => {
+      state.usActor = e.target.value;
+      document.getElementById('usActiveLabel').textContent = `Actor: ${VOICE_ACTORS[state.usActor].name}`;
+      if (state.readerDialect === 'US') {
+        document.getElementById('readerVoiceSelect').value = state.usActor;
+      }
+    });
+
+    // =========================================================================
+    // 5. SECTION 1 RENDERER: COMMON WORD PRACTICE (TWO-COLUMN UK VS US)
+    // =========================================================================
+    function renderCommonWords() {
+      const query = document.getElementById('commonSearchInput').value.trim().toLowerCase();
+      const category = document.getElementById('commonCategoryFilter').value;
+      const container = document.getElementById('commonWordsList');
+
+      const filtered = COMMON_WORDS.filter(item => {
+        const matchesQuery = item.word.toLowerCase().includes(query) || item.note.toLowerCase().includes(query);
+        const matchesCat = category === 'all' || item.category === category;
+        return matchesQuery && matchesCat;
+      });
+
+      if (!filtered.length) {
+        container.innerHTML = `<div class="py-10 text-center text-sm text-slate-400">No matching words found. Try clearing your search filter.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => `
+        <div class="py-3.5 px-2 hover:bg-slate-50/90 transition rounded-xl">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+
+            <!-- Column 1: British English -->
+            <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-uk-50/40 border border-uk-100">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-base font-bold text-slate-900">${item.word === 'Aluminium' ? 'Aluminium' : item.word}</span>
+                  <span class="font-mono text-xs font-medium text-uk-700 bg-white px-2 py-0.5 rounded border border-uk-200">${item.ukIpa}</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">${item.note}</p>
+              </div>
+              <button
+                type="button"
+                onclick="pronounceWord('${item.word === 'Aluminium' ? 'Aluminium' : item.word}', 'UK')"
+                class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-uk-600 hover:bg-uk-700 active:scale-95 text-white text-xs font-bold shadow-sm transition"
+                title="Pronounce in British English"
+              >
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <span>UK Play</span>
+              </button>
+            </div>
+
+            <!-- Column 2: American English -->
+            <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-us-50/40 border border-us-100">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-base font-bold text-slate-900">${item.word === 'Aluminium' ? 'Aluminum' : item.word}</span>
+                  <span class="font-mono text-xs font-medium text-us-700 bg-white px-2 py-0.5 rounded border border-us-200">${item.usIpa}</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">General American Dialect</p>
+              </div>
+              <button
+                type="button"
+                onclick="pronounceWord('${item.word === 'Aluminium' ? 'Aluminum' : item.word}', 'US')"
+                class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-us-600 hover:bg-us-700 active:scale-95 text-white text-xs font-bold shadow-sm transition"
+                title="Pronounce in American English"
+              >
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <span>US Play</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // =========================================================================
+    // 6. SECTION 2 RENDERER: CONFUSED & TRICKY PRONUNCIATION
+    // =========================================================================
+    function setTrickyCategory(cat) {
+      state.trickyCategory = cat;
+      document.querySelectorAll('.tricky-cat-btn').forEach(btn => {
+        if (btn.dataset.cat === cat) {
+          btn.className = 'tricky-cat-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white transition';
+        } else {
+          btn.className = 'tricky-cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+        }
+      });
+      renderTrickyWords();
+    }
+
+    function formatTrapHighlight(str) {
+      return str.replace(/\[(.*?)\]/g, '<span class="px-1 py-0.5 rounded bg-amber-100 text-amber-900 font-extrabold underline decoration-amber-500 decoration-2">$1</span>');
+    }
+
+    function pronounceSlowTrap(word, dialect) {
+      const prevRate = state.playbackRate;
+      state.playbackRate = 0.75;
+      pronounceWord(word, dialect, () => {
+        state.playbackRate = prevRate;
+      });
+    }
+
+    function renderTrickyWords() {
+      const grid = document.getElementById('trickyWordsGrid');
+      const filtered = TRICKY_WORDS.filter(item => state.trickyCategory === 'all' || item.category === state.trickyCategory);
+
+      grid.innerHTML = filtered.map(item => {
+        const cleanSpoken = item.word.split('(')[0].split('vs')[0].trim();
+        return `
+          <div class="flex flex-col justify-between p-4 rounded-xl bg-slate-50/70 border border-slate-200 hover:border-indigo-300 hover:shadow-sm transition">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  ${item.catLabel}
+                </span>
+                <button
+                  type="button"
+                  onclick="pronounceSlowTrap('${cleanSpoken}', 'UK')"
+                  class="text-[11px] font-bold text-slate-600 hover:text-indigo-700 bg-white px-2 py-0.5 rounded border border-slate-200 transition"
+                  title="Hear at 0.75x Slow Speed"
+                >
+                  🐢 0.75x Slow
+                </button>
+              </div>
+
+              <h3 class="text-lg font-bold text-slate-900">${formatTrapHighlight(item.highlight)}</h3>
+              <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">${item.tip}</p>
+
+              <div class="mt-3 pt-2.5 border-t border-slate-200/70 flex flex-wrap gap-2 text-[11px] font-mono">
+                <span class="px-2 py-0.5 rounded bg-uk-50 text-uk-800 border border-uk-200">🇬🇧 ${item.ukIpa}</span>
+                <span class="px-2 py-0.5 rounded bg-us-50 text-us-800 border border-us-200">🇺🇸 ${item.usIpa}</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-4">
+              <button
+                type="button"
+                onclick="pronounceWord('${cleanSpoken}', 'UK')"
+                class="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-uk-600 hover:bg-uk-700 text-white text-xs font-bold transition"
+              >
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <span>UK Play</span>
+              </button>
+              <button
+                type="button"
+                onclick="pronounceWord('${cleanSpoken}', 'US')"
+                class="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-us-600 hover:bg-us-700 text-white text-xs font-bold transition"
+              >
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <span>US Play</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 7. SECTION 3: PDF / TEXT UPLOAD, ENGLISH-ONLY CHECK & AUTO-READER
+    // =========================================================================
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    const fileInput = document.getElementById('fileUploadInput');
+    const dropZone = document.getElementById('dropZone');
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleUploadedFile(e.target.files[0]);
+      }
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-indigo-500', 'bg-indigo-50/50');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleUploadedFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    async function handleUploadedFile(file) {
+      const textArea = document.getElementById('rawTextInput');
+      setWaveformActive(false, `Reading ${file.name}...`);
+
+      try {
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          let extractedText = '';
+          const maxPages = Math.min(pdf.numPages, 15); // Parse up to 15 pages smoothly
+          for (let i = 1; i <= maxPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            extractedText += content.items.map(item => item.str).join(' ') + '\n\n';
+          }
+          textArea.value = extractedText.trim();
+        } else {
+          const text = await file.text();
+          textArea.value = text.trim();
+        }
+        processReaderText();
+      } catch (err) {
+        showLanguageWarning('Could not extract readable text from this file. Please try a standard text-based PDF or .txt document.');
+      }
+    }
+
+    // English-Only Language Gatekeeper
+    function validateEnglishOnly(text) {
+      const cleaned = text.trim();
+      if (!cleaned) {
+        return { valid: false, reason: 'Please enter or upload some English text first.' };
+      }
+
+      // 1. Reject non-Latin scripts (Arabic, Cyrillic, CJK, Devanagari, Bengali, etc.)
+      const nonLatinMatches = cleaned.match(/[^\u0000-\u024F\u1E00-\u1EFF\u2000-\u206F\s0-9.,!?;:'"()\-–—/]/g);
+      if (nonLatinMatches && nonLatinMatches.length > cleaned.length * 0.05) {
+        return { valid: false, reason: 'Non-English script detected. VoxLab supports English-language documents only.' };
+      }
+
+      // 2. Check English stop-word frequency vs common non-English European stop-words
+      const words = cleaned.toLowerCase().match(/\b[a-z]{2,}\b/g) || [];
+      if (words.length >= 4) {
+        const englishStopWords = new Set(['the', 'and', 'to', 'of', 'in', 'is', 'that', 'for', 'it', 'with', 'as', 'was', 'on', 'are', 'be', 'this', 'have', 'from', 'or', 'by', 'not', 'but', 'what', 'all', 'were', 'we', 'when', 'your', 'can', 'said', 'there', 'use', 'an', 'each', 'which', 'she', 'do', 'how', 'their', 'if', 'will', 'up', 'other', 'about', 'out', 'many', 'then', 'them', 'these', 'so', 'some', 'her', 'would', 'make', 'like', 'him', 'into', 'time', 'has', 'look', 'two', 'more', 'go', 'see', 'no', 'way', 'could', 'my', 'than', 'first', 'water', 'been', 'call', 'who', 'its', 'now', 'find', 'long', 'down', 'day', 'did', 'get', 'come', 'made', 'may', 'part', 'schedule', 'data', 'please']);
+        const foreignStopWords = new Set(['el', 'la', 'los', 'las', 'que', 'por', 'para', 'con', 'una', 'les', 'des', 'est', 'dans', 'pour', 'pas', 'sur', 'der', 'die', 'das', 'und', 'nicht', 'ist', 'che', 'non', 'per', 'sono', 'della', 'com', 'não', 'uma', 'para']);
+
+        let enHits = 0;
+        let foreignHits = 0;
+        words.forEach(w => {
+          if (englishStopWords.has(w)) enHits++;
+          if (foreignStopWords.has(w)) foreignHits++;
+        });
+
+        if (foreignHits > enHits && foreignHits >= 2) {
+          return { valid: false, reason: 'This passage appears to be written in a non-English language. Please provide English text only.' };
+        }
+      }
+
+      return { valid: true };
+    }
+
+    function showLanguageWarning(msg) {
+      const banner = document.getElementById('languageAlertBanner');
+      document.getElementById('languageAlertDetail').textContent = msg;
+      banner.classList.remove('hidden');
+    }
+
+    function hideLanguageWarning() {
+      document.getElementById('languageAlertBanner').classList.add('hidden');
+    }
+
+    function loadSampleParagraph() {
+      document.getElementById('rawTextInput').value =
+        "Either you follow the laboratory schedule, or the controversy over aluminium and vitamin privacy will continue. In British English, a lieutenant drinks water from a vase, while in American English the status of the brochure changes completely.";
+      processReaderText();
+    }
+
+    function setReaderDialect(dialect) {
+      state.readerDialect = dialect;
+      const ukBtn = document.getElementById('readerDialectUK');
+      const usBtn = document.getElementById('readerDialectUS');
+      const voiceSelect = document.getElementById('readerVoiceSelect');
+
+      if (dialect === 'UK') {
+        ukBtn.className = 'px-3 py-1 rounded-md text-xs font-bold bg-uk-600 text-white shadow-sm transition';
+        usBtn.className = 'px-3 py-1 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 transition';
+        voiceSelect.value = state.ukActor;
+      } else {
+        usBtn.className = 'px-3 py-1 rounded-md text-xs font-bold bg-us-600 text-white shadow-sm transition';
+        ukBtn.className = 'px-3 py-1 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 transition';
+        voiceSelect.value = state.usActor;
+      }
+    }
+
+    function syncReaderVoiceToGlobal() {
+      const selectedActorId = document.getElementById('readerVoiceSelect').value;
+      const actor = VOICE_ACTORS[selectedActorId];
+      if (actor.dialect === 'UK') {
+        state.ukActor = selectedActorId;
+        document.getElementById('ukActorSelect').value = selectedActorId;
+        document.getElementById('ukActiveLabel').textContent = `Actor: ${actor.name}`;
+        setReaderDialect('UK');
+      } else {
+        state.usActor = selectedActorId;
+        document.getElementById('usActorSelect').value = selectedActorId;
+        document.getElementById('usActiveLabel').textContent = `Actor: ${actor.name}`;
+        setReaderDialect('US');
+      }
+    }
+
+    function lookupWordIpa(cleanWord, dialect) {
+      const found = COMMON_WORDS.find(w => w.word.toLowerCase() === cleanWord.toLowerCase() || (cleanWord.toLowerCase() === 'aluminum' && w.word === 'Aluminium'));
+      if (found) {
+        return dialect === 'UK' ? found.ukIpa : found.usIpa;
+      }
+      const tricky = TRICKY_WORDS.find(t => t.word.toLowerCase().startsWith(cleanWord.toLowerCase()));
+      if (tricky) {
+        return dialect === 'UK' ? tricky.ukIpa : tricky.usIpa;
+      }
+      return dialect === 'UK' ? `/${cleanWord.toLowerCase()}/ (UK)` : `/${cleanWord.toLowerCase()}/ (US)`;
+    }
+
+    function processReaderText() {
+      stopAutoRead();
+      const rawText = document.getElementById('rawTextInput').value;
+      const check = validateEnglishOnly(rawText);
+
+      if (!check.valid) {
+        showLanguageWarning(check.reason);
+        return;
+      }
+      hideLanguageWarning();
+
+      // Tokenize into clickable words while preserving punctuation
+      const rawTokens = rawText.split(/\s+/).filter(Boolean);
+      state.readerTokens = rawTokens;
+
+      const canvas = document.getElementById('interactiveReaderCanvas');
+      canvas.innerHTML = rawTokens.map((token, idx) => `
+        <span
+          id="reader-token-${idx}"
+          onclick="handleReaderWordClick(${idx})"
+          class="word-token inline-block px-1.5 py-0.5 my-0.5 rounded-md cursor-pointer font-medium"
+        >${token}</span>
+      `).join(' ');
+
+      document.getElementById('readerWordCount').textContent = `${rawTokens.length} words loaded`;
+      setWaveformActive(false, 'Document Ready · Click Any Word');
+    }
+
+    function highlightReaderToken(index) {
+      document.querySelectorAll('.word-token').forEach(el => {
+        el.classList.remove('word-token-active', 'word-token-active-us');
+      });
+      if (index >= 0) {
+        const target = document.getElementById(`reader-token-${index}`);
+        if (target) {
+          target.classList.add(state.readerDialect === 'UK' ? 'word-token-active' : 'word-token-active-us');
+          target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    }
+
+    function handleReaderWordClick(index) {
+      stopAutoRead();
+      const token = state.readerTokens[index];
+      const cleanWord = token.replace(/[^a-zA-Z'-]/g, '');
+      if (!cleanWord) return;
+
+      highlightReaderToken(index);
+      const ipa = lookupWordIpa(cleanWord, state.readerDialect);
+      const actor = VOICE_ACTORS[state.readerDialect === 'UK' ? state.ukActor : state.usActor];
+
+      document.getElementById('wordInspectorBadge').innerHTML =
+        `<span class="font-bold text-slate-900">"${cleanWord}"</span> · <span class="text-indigo-700">${ipa}</span> · <span class="text-slate-500">${actor.name}</span>`;
+
+      pronounceWord(cleanWord, state.readerDialect);
+    }
+
+    // Sequential Word-by-Word Auto-Pronounce Engine
+    function startAutoRead() {
+      if (!state.readerTokens.length) {
+        processReaderText();
+      }
+      if (!state.readerTokens.length) return;
+
+      if (state.isAutoPaused && state.autoReadIndex >= 0) {
+        state.isAutoPaused = false;
+        state.isAutoReading = true;
+        stepAutoRead(state.autoReadIndex);
+        return;
+      }
+
+      stopAutoRead();
+      state.isAutoReading = true;
+      state.isAutoPaused = false;
+      stepAutoRead(0);
+    }
+
+    function stepAutoRead(index) {
+      if (!state.isAutoReading || state.isAutoPaused) return;
+      if (index >= state.readerTokens.length) {
+        stopAutoRead();
+        setWaveformActive(false, 'Finished Reading Passage');
+        return;
+      }
+
+      state.autoReadIndex = index;
+      const token = state.readerTokens[index];
+      const cleanWord = token.replace(/[^a-zA-Z'-]/g, '');
+
+      highlightReaderToken(index);
+
+      if (!cleanWord) {
+        state.autoReadTimer = setTimeout(() => stepAutoRead(index + 1), 120);
+        return;
+      }
+
+      const ipa = lookupWordIpa(cleanWord, state.readerDialect);
+      const actor = VOICE_ACTORS[state.readerDialect === 'UK' ? state.ukActor : state.usActor];
+      document.getElementById('wordInspectorBadge').innerHTML =
+        `<span class="font-bold text-slate-900">"${cleanWord}"</span> · <span class="text-indigo-700">${ipa}</span> · <span class="text-slate-500">${actor.name}</span>`;
+
+      pronounceWord(cleanWord, state.readerDialect, () => {
+        if (state.isAutoReading && !state.isAutoPaused) {
+          state.autoReadTimer = setTimeout(() => stepAutoRead(index + 1), 130);
+        }
+      });
+    }
+
+    function pauseAutoRead() {
+      if (state.isAutoReading) {
+        state.isAutoPaused = true;
+        clearTimeout(state.autoReadTimer);
+        stopCurrentAudio();
+        setWaveformActive(false, 'Auto-Read Paused');
+      }
+    }
+
+    function stopAutoRead() {
+      state.isAutoReading = false;
+      state.isAutoPaused = false;
+      state.autoReadIndex = -1;
+      clearTimeout(state.autoReadTimer);
+      stopCurrentAudio();
+      highlightReaderToken(-1);
+      setWaveformActive(false, 'Studio Idle · Ready');
+    }
+
+    // =========================================================================
+    // 8. INITIALIZATION ON PAGE LOAD
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCommonWords();
+      renderTrickyWords();
+      processReaderText();
+    });
+  </script>
+</body>
+</html>
