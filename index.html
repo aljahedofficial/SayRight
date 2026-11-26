@@ -349,19 +349,38 @@
         <div class="lg:col-span-5 space-y-4">
           <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
             <div>
+              <h2 class="text-lg font-bold text-slate-900">Upload PDF or Paste Text</h2>
+              <p class="text-xs text-slate-500 mt-0.5">English language documents only. Click any word or use Auto-Pronounce.</p>
+            </div>
+
+            <!-- Drag & Drop File Upload Zone -->
+            <label
+              id="dropZone"
+              for="fileUploadInput"
+              class="flex flex-col items-center justify-center p-5 border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-xl bg-slate-50/70 hover:bg-indigo-50/30 cursor-pointer transition text-center"
+            >
+              <svg class="w-7 h-7 text-indigo-600 mb-1.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+              </svg>
+              <span class="text-xs font-bold text-slate-800">Click to upload .PDF or .TXT file</span>
+              <span class="text-[11px] text-slate-500 mt-0.5">or drag and drop here (parsed 100% locally)</span>
+              <input id="fileUploadInput" type="file" accept=".pdf,.txt,application/pdf,text/plain" class="hidden" />
+            </label>
+
+            <div>
               <div class="flex items-center justify-between">
-            <label for="rawTextInput" class="text-xs font-bold text-slate-700">Or Paste English Text Directly:</label>
-            <button type="button" onclick="loadSampleParagraph()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
-              Load Sample Passage
-            </button>
-          </div>
-          <textarea
-            id="rawTextInput"
-            rows="5"
-            placeholder="Paste any English article, speech, or study notes here..."
-            class="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
-          >According to the laboratory schedule, neither the brochure nor the data about aluminium privacy was controversial. Please drink a glass of water before studying the dynasty controversy.</textarea>
-        </div>
+                <label for="rawTextInput" class="text-xs font-bold text-slate-700">Or Paste English Text Directly:</label>
+                <button type="button" onclick="loadSampleParagraph()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+                  Load Sample Passage
+                </button>
+              </div>
+              <textarea
+                id="rawTextInput"
+                rows="5"
+                placeholder="Paste any English article, speech, or study notes here..."
+                class="w-full mt-1.5 p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+              >According to the laboratory schedule, neither the brochure nor the data about aluminium privacy was controversial. Please drink a glass of water before studying the dynasty controversy.</textarea>
+            </div>
 
         <!-- Dialect Recording Availability / Fallback Notice Banner -->
         <div id="dialectAvailabilityBanner" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between gap-2">
@@ -587,25 +606,6 @@
       currentAudio: null,
       wikimediaCache: new Map(), // Session cache keyed by `${dialect}_${wordLower}` -> audioUrl | null
       preloadedAudio: new Map(), // Cached HTMLAudioElement instances keyed by `${dialect}_${wordLower}`
-    };
-
-    let state = {
-      activeTab: 'common',
-      playbackRate: 1.0,
-      activeDialect: 'UK', // 'UK' or 'US' — always matches activeActor.dialect
-      activeActor: 'uk_m1', // Single source of truth for locked human voice actor
-      ukActor: 'uk_m1',
-      usActor: 'us_m1',
-      trickyCategory: 'all',
-      readerDialect: 'UK',
-      readerTokens: [],
-      autoReadIndex: -1,
-      isAutoReading: false,
-      isAutoPaused: false,
-      autoReadTimer: null,
-      currentAudio: null,
-      audioCache: new Map(), // Caches resolved human recording URLs per word & dialect
-      preloadedAudio: new Map(), // Preloaded HTMLAudioElement instances for low-latency playback
     };
 
     /**
@@ -1401,12 +1401,18 @@
     // =========================================================================
     // 8. INITIALIZATION ON PAGE LOAD
     // =========================================================================
-    window.addEventListener('DOMContentLoaded', () => {
+    function initVoxLab() {
       selectVoiceActor('uk_m1');
       renderCommonWords();
       renderTrickyWords();
       processReaderText();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initVoxLab);
+    } else {
+      initVoxLab();
+    }
   </script>
 </body>
 </html>
